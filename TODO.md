@@ -20,18 +20,34 @@
 
 -   [x] Build uploadVideo, getVideoFile, getVideoData, and getVideos video routes
 
--   [x] create [feedbackController](./src/controllers/feedbackController.ts)
+-   [x] Create [commentController](./src/controllers/commentController.ts)
 
-## Later on...
+## April 19, 2023
 
--   [ ] Build getComments, postComment, and deleteComment comment routes
+-   [x] Build getComments, postComment, and deleteComment comment routes
 
--   [ ] Build like and unlike routes
+-   [x] Create [feedbackController](./src/controllers/feedbackController.ts)
 
--   [ ] Add new fields to user collection model (ip, deviceinfo)
+-   [x] Build like and unlike routes
 
--   [ ] Test API endpoints
+-   [x] Separate error messages for easier maintenance
 
--   [ ] Write API docs
+-   [x] Implement checkResourceExists middlewares
+
+## April 20, 2023
+
+-   [x] Enhance models and database operations
+
+-   [x] Fix bugs in Controllers
+
+-   [x] Make username a unique field
+
+-   [x] Write API docs
+
+## For Later..
+
+-   [ ] Implement authentication to make sure the requests are coming from a trusted origin (mobile client / web client)
+
+-   [ ] Authenticate requests to make sure the uploader/deleter/liker/commentor is the same person who calimed to be
 
 -   [ ] Deploy backend app on heroku

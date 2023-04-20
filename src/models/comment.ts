@@ -2,12 +2,12 @@ import { Schema, model } from "mongoose";
 
 const commentSchema = new Schema(
     {
-        commenterId: {
+        commentorId: {
             type: String,
             required: true,
             trim: true,
         },
-        commenterUsername: {
+        commentorUsername: {
             type: String,
             required: true,
             trim: true,
@@ -18,7 +18,7 @@ const commentSchema = new Schema(
             maxLength: [300, "Comment max length is 300 characters"],
             trim: true,
         },
-        videoId: {
+        videoKey: {
             type: String,
             required: true,
             trim: true,

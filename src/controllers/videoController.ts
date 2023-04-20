@@ -2,9 +2,11 @@
 import fs from "fs";
 import express from "express";
 import upload from "../models/multerSetup";
-import { s3_download, s3_upload } from "../models/s3";
-import { MulterFileType, VideoType } from "../middleware/types";
+import { s3_download, s3_upload, s3_delete } from "../models/s3";
+import { MulterFileType, VideoType, RequestWithResourceType } from "../types";
 import Video from "../models/video";
+import { checkVideoExists } from "../middleware/checkResourceExists";
+import { invalidKeyErrorMsg } from "../middleware/errorHandling";
 
 // create router
 const router = express.Router();
@@ -25,24 +27,24 @@ router.post("/upload", upload.single("videoFile"), async (req, res) => {
         await fs.promises.unlink(videoFile.path);
 
         // create video object structure
-        const videoObject: VideoType = {
+        const videoObject = {
             uploaderId,
             uploaderUsername,
             videoKey: s3_result.Key,
-            likes: [],
         };
 
         // upload video data to db
-        const uploadedVideo = await Video.create(videoObject);
+        const videoDocument: VideoType = await Video.create(videoObject);
 
         res.status(200).json({
             success: true,
-            uploadedVideo,
+            videoDocument,
         });
-    } catch (err) {
-        res.status(404).json({
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
             success: false,
-            error: err,
+            error: err.message,
         });
     }
 });
@@ -51,28 +53,19 @@ router.post("/upload", upload.single("videoFile"), async (req, res) => {
  * @get
  *      GET request to get a specific video file through a provided video key
  */
-router.get("/download/videoFile", async (req, res) => {
+router.get("/download/videoFile", checkVideoExists, async (req, res) => {
     // destructure
     const videoKey = req.query.videoKey as string;
 
     try {
-        // check if video exists
-        const videoObject = await Video.findOne({ videoKey });
-        if (!videoObject) {
-            return res.status(400).json({
-                success: false,
-                error: "Video file not found",
-            });
-        }
-
         // get video from s3
         const readStream = s3_download(videoKey);
         readStream.pipe(res);
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         res.status(400).json({
             success: false,
-            error: err,
+            error: err.message,
         });
     }
 });
@@ -81,35 +74,35 @@ router.get("/download/videoFile", async (req, res) => {
  * @get
  *      GET request to get a specific video data through a provided video key
  */
-router.get("/download/videoData", async (req, res) => {
-    // destructure
-    const videoKey = req.query.videoKey as string;
+router.get(
+    "/download/videoData",
+    checkVideoExists,
+    async (req: RequestWithResourceType, res) => {
+        // destructure
+        const userId = req.query.username as string;
 
-    try {
-        // find video object
-        const videoData = await Video.findOne({ videoKey });
+        // get video document from request object (attached by checkVideoExists handler)
+        const videoData = req.resource as VideoType;
 
-        // if not found
-        if (!videoData) {
-            return res.status(400).json({
+        // check if user liked the video
+        const selfLikedVideo = videoData.likes.includes(userId);
+
+        try {
+            // return video data
+            res.status(200).json({
+                success: true,
+                videoData,
+                selfLikedVideo,
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(400).json({
                 success: false,
-                error: "Video data not found",
+                error: err.message,
             });
         }
-
-        // return video data
-        res.status(200).json({
-            success: true,
-            videoData,
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err,
-        });
     }
-});
+);
 
 /**
  * @post
@@ -132,8 +125,8 @@ router.post("/getVideos", async (req, res) => {
          * Use MongoDB $group aggregation stage to make sure
          * we don't get duplicate documents.
          */
-        const videos = await Video.aggregate([
-            { $match: { _id: { $nin: viewed } } },
+        const videos: VideoType[] = await Video.aggregate([
+            { $match: { videoKey: { $nin: viewed } } },
             { $sample: { size: count } },
             { $group: { _id: "$_id", doc: { $first: "$$ROOT" } } },
         ]);
@@ -143,11 +136,49 @@ router.post("/getVideos", async (req, res) => {
             success: true,
             videos,
         });
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         res.status(400).json({
             success: false,
-            error: err,
+            error: err.message,
+        });
+    }
+});
+
+/**
+ * @delete
+ *      DELETE request to delete a video from s3 and db
+ */
+router.delete("/delete", async (req, res) => {
+    // destructure
+    const videoKey = req.query.videoKey as string;
+
+    try {
+        // delete video document from db
+        const deletedVideoDocument: VideoType | null =
+            await Video.findOneAndDelete({ videoKey });
+
+        // check if video data was deleted from db
+        if (!deletedVideoDocument) {
+            return res.status(400).json({
+                success: false,
+                error: invalidKeyErrorMsg,
+            });
+        }
+
+        // delete video file from s3
+        await s3_delete(videoKey);
+
+        // return response
+        res.status(200).json({
+            success: true,
+            deletedVideoDocument,
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
         });
     }
 });

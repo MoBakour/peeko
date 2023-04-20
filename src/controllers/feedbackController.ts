@@ -1,45 +1,93 @@
 // imports
 import express from "express";
-import { CommentType } from "../middleware/types";
-import User from "../models/user";
-import Comment from "../models/comment";
+import {
+    checkUserExists,
+    checkVideoExists,
+} from "../middleware/checkResourceExists";
 import Video from "../models/video";
+import { VideoType } from "../types";
+import {
+    invalidFeedbackOperationErrorMsg_LIKE,
+    invalidFeedbackOperationErrorMsg_UNLIKE,
+} from "../middleware/errorHandling";
 
 // express router
 const router = express.Router();
 
 /**
- * @get
- *      GET request to get comments of a specific video through provided videoId
+ * @put
+ *      PUT request to like a video post
  */
-router.get("/getComments", async (req, res) => {
+router.put("/like", checkVideoExists, checkUserExists, async (req, res) => {
     // destructure
-    const videoId = req.query.videoId as string;
+    const { userId, videoKey } = req.body;
 
     try {
-        // check if video exists
-        const video = await Video.findById(videoId);
-        if (!video) {
+        // add userId to video likes array field in db
+        const preUpdatedDocument = (await Video.findOneAndUpdate(
+            { videoKey },
+            { $addToSet: { likes: userId } },
+            { new: false }
+        )) as VideoType;
+
+        // if userId was already in likes array
+        if (preUpdatedDocument.likes.includes(userId)) {
             return res.status(400).json({
                 success: false,
-                error: "Video does not exist",
+                likesCount: preUpdatedDocument.likes.length,
+                error: invalidFeedbackOperationErrorMsg_LIKE,
             });
         }
-
-        // get comments
-        const comments = await Comment.find({ videoId });
 
         // return response
         res.status(200).json({
             success: true,
-            comments,
-            commentsCount: comments.length,
+            likesCount: preUpdatedDocument.likes.length + 1,
         });
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         res.status(400).json({
             success: false,
-            error: err,
+            error: err.message,
+        });
+    }
+});
+
+/**
+ * @put
+ *      PUT request to remove like from a video post
+ */
+router.put("/unlike", checkVideoExists, checkUserExists, async (req, res) => {
+    // destructure
+    const { userId, videoKey } = req.body;
+
+    try {
+        // remove userId from video likes array field in db
+        const preUpdatedDocument = (await Video.findOneAndUpdate(
+            { videoKey },
+            { $pull: { likes: userId } },
+            { new: false }
+        )) as VideoType;
+
+        // if userId was not in likes array
+        if (!preUpdatedDocument.likes.includes(userId)) {
+            return res.status(400).json({
+                success: false,
+                likesCount: preUpdatedDocument.likes.length,
+                error: invalidFeedbackOperationErrorMsg_UNLIKE,
+            });
+        }
+
+        // return promise
+        res.status(200).json({
+            success: true,
+            likesCount: preUpdatedDocument.likes.length - 1,
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
         });
     }
 });

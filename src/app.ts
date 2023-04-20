@@ -7,8 +7,10 @@ import express from "express";
 import mongoose from "mongoose";
 
 // local imports
-import userRoutes from "./controllers/userController";
+import userController from "./controllers/userController";
 import videoController from "./controllers/videoController";
+import commentController from "./controllers/commentController";
+import feedbackController from "./controllers/feedbackController";
 
 // config express app
 const app = express();
@@ -33,5 +35,12 @@ mongoose
     });
 
 // use routes
-app.use("/user", userRoutes);
+app.use("/user", userController);
 app.use("/video", videoController);
+app.use("/comment", commentController);
+app.use("/feedback", feedbackController);
+
+// default (404) route
+app.use((req, res) => {
+    res.status(404).json({ success: false, error: "404 - UNDEFINED ROUTE" });
+});

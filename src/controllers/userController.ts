@@ -1,10 +1,52 @@
 // imports
 import express from "express";
-import { UserType } from "../middleware/types";
+import { UserType } from "../types";
 import User from "../models/user";
+import {
+    invalidIdErrorMsg,
+    invalidUsernameErrorMsg,
+} from "../middleware/errorHandling";
 
 // express router
 const router = express.Router();
+
+/**
+ * @post
+ *      POST request to attempt signup from client.
+ */
+router.post("/signup", async (req, res) => {
+    // destructure
+    const { username, fingerprint } = req.body;
+
+    try {
+        // build user object structure
+        const userObject = {
+            username,
+            fingerprint,
+        };
+
+        // insert to db and send response
+        const userDocument: UserType = await User.create(userObject);
+
+        res.status(200).json({
+            success: true,
+            userDocument,
+        });
+    } catch (err: any) {
+        if (err.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                error: invalidUsernameErrorMsg,
+            });
+        }
+
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
+        });
+    }
+});
 
 /**
  * @get
@@ -16,7 +58,7 @@ router.get("/hasAccount", async (req, res) => {
 
     try {
         // check if fingerprint matches in the db
-        const accounts = await User.find({ fingerprint });
+        const accounts: UserType[] = await User.find({ fingerprint });
         const hasAccount = accounts.length > 0;
 
         // return result
@@ -25,43 +67,11 @@ router.get("/hasAccount", async (req, res) => {
             hasAccount,
             accounts,
         });
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         res.status(400).json({
             success: false,
-            error: err,
-        });
-    }
-});
-
-/**
- * @post
- *      POST request to attempt login from a new client.
- */
-router.post("/login", async (req, res) => {
-    // destructure
-    const { username, fingerprint } = req.body;
-
-    try {
-        // build user object structure
-        const userObject: UserType = {
-            username,
-            fingerprint,
-        };
-
-        // insert to db and send response
-        const createdUser = await User.create(userObject);
-
-        res.status(200).json({
-            success: true,
-            exists: false,
-            createdUser,
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err,
+            error: err.message,
         });
     }
 });
@@ -76,26 +86,27 @@ router.delete("/delete", async (req, res) => {
 
     try {
         // delete user
-        const deletedUser = await User.findByIdAndDelete(userId);
+        const deletedUserDocument: UserType | null =
+            await User.findByIdAndDelete(userId);
 
         // if user not found
-        if (!deletedUser) {
+        if (!deletedUserDocument) {
             return res.status(400).json({
                 success: false,
-                error: "No user found with the given id",
+                error: invalidIdErrorMsg,
             });
         }
 
         // if deleted user
         res.status(200).json({
             success: true,
-            deletedUser,
+            deletedUserDocument,
         });
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         res.status(400).json({
             success: false,
-            error: err,
+            error: err.message,
         });
     }
 });

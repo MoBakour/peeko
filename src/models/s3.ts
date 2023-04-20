@@ -1,7 +1,7 @@
 // imports
 import S3 from "aws-sdk/clients/s3";
 import fs from "fs";
-import { MulterFileType } from "../middleware/types";
+import { MulterFileType } from "../types";
 
 // s3 instance
 const bucketName = process.env.AWS_BUCKET_NAME!;
@@ -28,7 +28,7 @@ export const s3_upload = async (file: MulterFileType) => {
 
         const result = await s3.upload(uploadParams).promise();
         return result;
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         throw err;
     }
@@ -43,16 +43,24 @@ export const s3_download = (fileKey: string) => {
         };
 
         return s3.getObject(downloadParams).createReadStream();
-    } catch (err) {
+    } catch (err: any) {
         console.error(err);
         throw err;
     }
 };
 
-// export variables
-export const s3_variables = {
-    bucketName,
-    region,
-    accessKeyId,
-    secretAccessKey,
+// delete from s3
+export const s3_delete = async (fileKey: string) => {
+    try {
+        const deleteParams = {
+            Bucket: bucketName,
+            Key: fileKey,
+        };
+
+        const result = await s3.deleteObject(deleteParams).promise();
+        return result;
+    } catch (err: any) {
+        console.error(err);
+        throw err;
+    }
 };

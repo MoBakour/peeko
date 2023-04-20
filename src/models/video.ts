@@ -15,10 +15,16 @@ const videoSchema = new Schema(
         videoKey: {
             type: String,
             required: true,
+            unique: true,
             trim: true,
         },
         likes: {
             type: [String],
+            default: [],
+        },
+        commentsNumber: {
+            type: Number,
+            default: 0,
         },
     },
     { timestamps: true }
