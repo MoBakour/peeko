@@ -17,7 +17,7 @@ export const checkVideoExists = async (
         // get video
         const video: VideoType | null = await Video.findOne({ videoKey });
 
-        // check if video exists
+        // if video does not exist
         if (!video) {
             return res.status(400).json({
                 success: false,
@@ -54,7 +54,7 @@ export const checkUserExists = async (
         // get user
         const user: UserType | null = await User.findById(userId);
 
-        // check if user exists
+        // if user does not exist
         if (!user) {
             return res.status(400).json({
                 success: false,

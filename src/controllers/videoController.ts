@@ -164,44 +164,39 @@ router.post("/getVideos", requireLogin, async (req, res) => {
  * @delete
  *      DELETE request to delete a video from s3 and db
  */
-router.delete(
-    "/deleteVideo",
-    requireSelf,
-    checkUserExists,
-    async (req, res) => {
-        // destructure
-        const videoKey = req.query.videoKey as string;
+router.delete("/deleteVideo", requireSelf, async (req, res) => {
+    // destructure
+    const videoKey = req.query.videoKey as string;
 
-        try {
-            // delete video document from db
-            const deletedVideoDocument: VideoType | null =
-                await Video.findOneAndDelete({ videoKey });
+    try {
+        // delete video document from db
+        const deletedVideoDocument: VideoType | null =
+            await Video.findOneAndDelete({ videoKey });
 
-            // check if video data was deleted from db
-            if (!deletedVideoDocument) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Invalid Key Error: Video data was not found with the provided key",
-                });
-            }
-
-            // delete video file from s3
-            await s3_delete(videoKey);
-
-            // return response
-            res.status(200).json({
-                success: true,
-                deletedVideoDocument,
-            });
-        } catch (err: any) {
-            console.error(err);
-            res.status(400).json({
+        // check if video data was deleted from db
+        if (!deletedVideoDocument) {
+            return res.status(400).json({
                 success: false,
-                error: err.message,
+                error: "Invalid Key Error: Video data was not found with the provided key",
             });
         }
+
+        // delete video file from s3
+        await s3_delete(videoKey);
+
+        // return response
+        res.status(200).json({
+            success: true,
+            deletedVideoDocument,
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
+        });
     }
-);
+});
 
 // export router
 export default router;
