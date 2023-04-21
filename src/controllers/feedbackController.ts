@@ -1,15 +1,8 @@
 // imports
 import express from "express";
-import {
-    checkUserExists,
-    checkVideoExists,
-} from "../middleware/checkResourceExists";
 import Video from "../models/video";
-import { VideoType } from "../types";
-import {
-    invalidFeedbackOperationErrorMsg_LIKE,
-    invalidFeedbackOperationErrorMsg_UNLIKE,
-} from "../middleware/errorHandling";
+import { requireSelf } from "../middleware/authentication";
+import { checkUserExists } from "../middleware/checkResourceExists";
 
 // express router
 const router = express.Router();
@@ -18,24 +11,32 @@ const router = express.Router();
  * @put
  *      PUT request to like a video post
  */
-router.put("/like", checkVideoExists, checkUserExists, async (req, res) => {
+router.put("/likeVideo", requireSelf, checkUserExists, async (req, res) => {
     // destructure
     const { userId, videoKey } = req.body;
 
     try {
         // add userId to video likes array field in db
-        const preUpdatedDocument = (await Video.findOneAndUpdate(
+        const preUpdatedDocument = await Video.findOneAndUpdate(
             { videoKey },
             { $addToSet: { likes: userId } },
             { new: false }
-        )) as VideoType;
+        );
+
+        // if video not found
+        if (!preUpdatedDocument) {
+            return res.status(400).json({
+                success: false,
+                error: "Video not found",
+            });
+        }
 
         // if userId was already in likes array
         if (preUpdatedDocument.likes.includes(userId)) {
             return res.status(400).json({
                 success: false,
                 likesCount: preUpdatedDocument.likes.length,
-                error: invalidFeedbackOperationErrorMsg_LIKE,
+                error: "Invalid Feedback Operation Error: failed to like video post. reason: video was already liked",
             });
         }
 
@@ -57,24 +58,32 @@ router.put("/like", checkVideoExists, checkUserExists, async (req, res) => {
  * @put
  *      PUT request to remove like from a video post
  */
-router.put("/unlike", checkVideoExists, checkUserExists, async (req, res) => {
+router.put("/unlikeVideo", requireSelf, async (req, res) => {
     // destructure
     const { userId, videoKey } = req.body;
 
     try {
         // remove userId from video likes array field in db
-        const preUpdatedDocument = (await Video.findOneAndUpdate(
+        const preUpdatedDocument = await Video.findOneAndUpdate(
             { videoKey },
             { $pull: { likes: userId } },
             { new: false }
-        )) as VideoType;
+        );
+
+        // if video not found
+        if (!preUpdatedDocument) {
+            return res.status(400).json({
+                success: false,
+                error: "Video not found",
+            });
+        }
 
         // if userId was not in likes array
         if (!preUpdatedDocument.likes.includes(userId)) {
             return res.status(400).json({
                 success: false,
                 likesCount: preUpdatedDocument.likes.length,
-                error: invalidFeedbackOperationErrorMsg_UNLIKE,
+                error: "Invalid Feedback Operation Error: failed to unlike video post. reason: video post was not liked",
             });
         }
 

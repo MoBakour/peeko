@@ -44,10 +44,18 @@
 
 -   [x] Write API docs
 
+## April 21, 2023
+
+-   [x] Implemented JWT authentication and authenticated sensitive actions
+
+-   [x] Removed unnecessary code
+
+-   [x] Unified routes path naming convention
+
+-   [x] Fixed errors in the API doc file
+
 ## For Later..
 
--   [ ] Implement authentication to make sure the requests are coming from a trusted origin (mobile client / web client)
-
--   [ ] Authenticate requests to make sure the uploader/deleter/liker/commentor is the same person who calimed to be
+-   [ ] Test all API endpoints
 
 -   [ ] Deploy backend app on heroku

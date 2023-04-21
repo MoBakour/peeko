@@ -1,13 +1,12 @@
 // imports
 import { Response, NextFunction } from "express";
-import { RequestWithResourceType, UserType, VideoType } from "../types";
+import { PeekoRequest, UserType, VideoType } from "../types";
 import User from "../models/user";
 import Video from "../models/video";
-import { invalidIdErrorMsg, invalidKeyErrorMsg } from "./errorHandling";
 
 // check if video exists in the database
 export const checkVideoExists = async (
-    req: RequestWithResourceType,
+    req: PeekoRequest,
     res: Response,
     next: NextFunction
 ) => {
@@ -22,7 +21,7 @@ export const checkVideoExists = async (
         if (!video) {
             return res.status(400).json({
                 success: false,
-                error: invalidKeyErrorMsg,
+                error: "Invalid Key Error: Video data was not found with the provided key",
             });
         }
 
@@ -40,7 +39,7 @@ export const checkVideoExists = async (
 
 // check if user exists in the database
 export const checkUserExists = async (
-    req: RequestWithResourceType,
+    req: PeekoRequest,
     res: Response,
     next: NextFunction
 ) => {
@@ -59,7 +58,7 @@ export const checkUserExists = async (
         if (!user) {
             return res.status(400).json({
                 success: false,
-                error: invalidIdErrorMsg,
+                error: "Invalid ID Error: User data was not found with the provided ID",
             });
         }
 

@@ -6,8 +6,9 @@ import { Request } from "express";
 export type MulterFileType = Express.Multer.File;
 
 // Request with resource type
-export interface RequestWithResourceType extends Request {
+export interface PeekoRequest extends Request {
     resource?: UserType | CommentType | VideoType;
+    currentUser?: string;
 }
 
 // User type

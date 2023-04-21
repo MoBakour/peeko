@@ -1,13 +1,10 @@
 // imports
 import express from "express";
-import { UserType, CommentType, RequestWithResourceType } from "../types";
-import {
-    checkUserExists,
-    checkVideoExists,
-} from "../middleware/checkResourceExists";
+import { UserType, CommentType, PeekoRequest } from "../types";
 import Comment from "../models/comment";
 import Video from "../models/video";
-import { invalidCommentOperationErrorMsg_DELETE } from "../middleware/errorHandling";
+import { requireLogin, requireSelf } from "../middleware/authentication";
+import { checkUserExists } from "../middleware/checkResourceExists";
 
 // express router
 const router = express.Router();
@@ -16,7 +13,7 @@ const router = express.Router();
  * @get
  *      GET request to get comments of a specific video through provided video id
  */
-router.get("/getComments", checkVideoExists, async (req, res) => {
+router.get("/getComments", requireLogin, async (req, res) => {
     // destructure
     const videoKey = req.query.videoKey as string;
 
@@ -44,9 +41,9 @@ router.get("/getComments", checkVideoExists, async (req, res) => {
  */
 router.post(
     "/postComment",
-    checkVideoExists,
+    requireSelf,
     checkUserExists,
-    async (req: RequestWithResourceType, res) => {
+    async (req: PeekoRequest, res) => {
         // destructure
         const { videoKey, commentorId, comment } = req.body;
         const userObject = req.resource as UserType;
@@ -72,6 +69,15 @@ router.post(
                 { new: true }
             );
 
+            // if video doesn't exist, delete comment
+            if (!updatedVideo) {
+                await Comment.findByIdAndDelete(commentDocument._id);
+                return res.status(400).json({
+                    success: false,
+                    error: "Video not found",
+                });
+            }
+
             // return response
             res.status(200).json({
                 success: true,
@@ -92,7 +98,7 @@ router.post(
  * @delete
  *      DELETE request to delete comments form a video through a provided comment id
  */
-router.delete("/delete", checkVideoExists, async (req, res) => {
+router.delete("/deleteComment", requireSelf, async (req, res) => {
     // destructure
     const commentId = req.query.commentId as string;
 
@@ -106,7 +112,7 @@ router.delete("/delete", checkVideoExists, async (req, res) => {
         if (!deletedCommentDocument) {
             return res.status(400).json({
                 success: false,
-                error: invalidCommentOperationErrorMsg_DELETE,
+                error: "Invalid Comment Operation Error: failed to delete comment. reason: comment not found",
             });
         }
 

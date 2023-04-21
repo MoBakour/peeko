@@ -2,10 +2,7 @@
 import express from "express";
 import { UserType } from "../types";
 import User from "../models/user";
-import {
-    invalidIdErrorMsg,
-    invalidUsernameErrorMsg,
-} from "../middleware/errorHandling";
+import { createToken, requireSelf } from "../middleware/authentication";
 
 // express router
 const router = express.Router();
@@ -14,7 +11,7 @@ const router = express.Router();
  * @post
  *      POST request to attempt signup from client.
  */
-router.post("/signup", async (req, res) => {
+router.post("/createAccount", async (req, res) => {
     // destructure
     const { username, fingerprint } = req.body;
 
@@ -28,15 +25,19 @@ router.post("/signup", async (req, res) => {
         // insert to db and send response
         const userDocument: UserType = await User.create(userObject);
 
+        // create JWT token
+        const token = await createToken(userDocument._id);
+
         res.status(200).json({
             success: true,
             userDocument,
+            token,
         });
     } catch (err: any) {
         if (err.code === 11000) {
             return res.status(400).json({
                 success: false,
-                error: invalidUsernameErrorMsg,
+                error: "Username already used, try something else",
             });
         }
 
@@ -61,11 +62,19 @@ router.get("/hasAccount", async (req, res) => {
         const accounts: UserType[] = await User.find({ fingerprint });
         const hasAccount = accounts.length > 0;
 
+        // create JWT token/s
+        const tokens: { userId: string; token: string }[] = [];
+        for (const account of accounts) {
+            const token = (await createToken(account._id)) as string;
+            tokens.push({ userId: account._id, token });
+        }
+
         // return result
         res.status(200).json({
             success: true,
             hasAccount,
             accounts,
+            tokens,
         });
     } catch (err: any) {
         console.error(err);
@@ -80,7 +89,7 @@ router.get("/hasAccount", async (req, res) => {
  * @delete
  *      DELETE request to delete a user from the db.
  */
-router.delete("/delete", async (req, res) => {
+router.delete("/deleteAccount", requireSelf, async (req, res) => {
     // destructure
     const userId = req.query.userId as string;
 
@@ -93,7 +102,7 @@ router.delete("/delete", async (req, res) => {
         if (!deletedUserDocument) {
             return res.status(400).json({
                 success: false,
-                error: invalidIdErrorMsg,
+                error: "Invalid ID Error: User data was not found with the provided ID",
             });
         }
 

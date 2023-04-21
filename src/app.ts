@@ -6,11 +6,14 @@ dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
 
-// local imports
+// import routes
 import userController from "./controllers/userController";
 import videoController from "./controllers/videoController";
 import commentController from "./controllers/commentController";
 import feedbackController from "./controllers/feedbackController";
+
+// other imports
+import { authenticateUser } from "./middleware/authentication";
 
 // config express app
 const app = express();
@@ -33,6 +36,9 @@ mongoose
     .catch((err) => {
         console.error(err);
     });
+
+// use authenticateUser
+app.use(authenticateUser);
 
 // use routes
 app.use("/user", userController);
