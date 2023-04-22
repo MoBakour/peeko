@@ -54,8 +54,8 @@
 
 -   [x] Fixed errors in the API doc file
 
-## For Later..
+## April 22, 2023
 
--   [ ] Test all API endpoints
+-   [x] Test all API endpoints
 
--   [ ] Deploy backend app on heroku
+-   [x] Deploy backend app v1 on heroku

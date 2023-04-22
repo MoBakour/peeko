@@ -87,7 +87,7 @@ router.put("/unlikeVideo", requireSelf, async (req, res) => {
             });
         }
 
-        // return promise
+        // return response
         res.status(200).json({
             success: true,
             likesCount: preUpdatedDocument.likes.length - 1,

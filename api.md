@@ -13,6 +13,7 @@ UserObject = {
     },
     username: {
         type: String,
+        unique: true,
         required: true,
         maxLength: 24,
         trim: true,

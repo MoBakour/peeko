@@ -1,5 +1,6 @@
 // imports
 import express from "express";
+import mongoose from "mongoose";
 import { UserType } from "../types";
 import User from "../models/user";
 import { createToken, requireSelf } from "../middleware/authentication";
@@ -34,10 +35,13 @@ router.post("/createAccount", async (req, res) => {
             token,
         });
     } catch (err: any) {
-        if (err.code === 11000) {
+        if (
+            err.code === 11000 ||
+            err instanceof mongoose.Error.ValidationError
+        ) {
             return res.status(400).json({
                 success: false,
-                error: "Username already used, try something else",
+                error: err.message,
             });
         }
 
@@ -106,7 +110,7 @@ router.delete("/deleteAccount", requireSelf, async (req, res) => {
             });
         }
 
-        // if deleted user
+        // return response
         res.status(200).json({
             success: true,
             deletedUserDocument,

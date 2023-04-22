@@ -7,3 +7,9 @@
 # April 18, 2023
 
 ### - Created peeko-backend github repo
+
+# April 22, 2023
+
+### - Completed the work on v1
+
+### - Deployed app on heroku
