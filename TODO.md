@@ -58,4 +58,4 @@
 
 -   [x] Test all API endpoints
 
--   [x] Deploy backend app v1 on heroku
+-   [x] Deploy backend app version 1.0.0-test.1 on heroku
