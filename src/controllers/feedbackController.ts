@@ -58,7 +58,7 @@ router.put("/likeVideo", requireSelf, checkUserExists, async (req, res) => {
  * @put
  *      PUT request to remove like from a video post
  */
-router.put("/unlikeVideo", requireSelf, async (req, res) => {
+router.put("/unlikeVideo", requireSelf, checkUserExists, async (req, res) => {
     // destructure
     const { userId, videoKey } = req.body;
 

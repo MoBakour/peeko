@@ -82,7 +82,7 @@ router.post(
             res.status(200).json({
                 success: true,
                 commentDocument,
-                newCommentsNumber: updatedVideo?.commentsNumber,
+                newCommentsNumber: updatedVideo.commentsNumber,
             });
         } catch (err: any) {
             console.error(err);

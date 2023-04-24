@@ -59,6 +59,10 @@ export const authenticateUser = async (
 
 /**
  * This function requires that the authenticated user is the same user that is attempting the action
+ * possible sources of user id:
+ *      - req.body.userId (post/put requests)
+ *      - req.query.userId (get/delete requests)
+ *      - req.body.commentorId (comment request)
  */
 export const requireSelf = (
     req: PeekoRequest,
