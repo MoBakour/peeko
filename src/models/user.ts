@@ -22,6 +22,11 @@ const userSchema = new Schema(
             required: true,
             trim: true,
         },
+        deviceInfo: {
+            product: String,
+            brand: String,
+            ipAddress: String,
+        },
     },
     { timestamps: true }
 );

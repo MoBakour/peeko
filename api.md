@@ -24,6 +24,11 @@ UserObject = {
         required: true,
         trim: true,
     },
+    deviceInfo: {
+        product: String,
+        brand: String,
+        ipAddress: String,
+    },
     createdAt: {
         type: Date,
         autoAssigned: true,

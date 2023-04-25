@@ -73,7 +73,8 @@ export const requireSelf = (
     const { currentUser } = req;
     const affectedUserId = (req.query.userId ||
         req.body.userId ||
-        req.body.commentorId) as string;
+        req.body.commentorId ||
+        req.body.uploaderId) as string;
 
     if (!currentUser || currentUser !== affectedUserId) {
         return res.status(400).json({

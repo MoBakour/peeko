@@ -124,5 +124,37 @@ router.delete("/deleteAccount", requireSelf, async (req, res) => {
     }
 });
 
+/**
+ * @post
+ *      POST request to update the recorded IP address of the user
+ */
+router.post("/updateIpAddress", async (req, res) => {
+    // destructure ip address
+    const { ipAddress, userId } = req.body;
+
+    try {
+        const result = await User.findByIdAndUpdate(userId, {
+            "deviceInfo.ipAddress": ipAddress,
+        });
+
+        if (!result) {
+            return res.status(400).json({
+                success: false,
+                error: "User not found",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
+        });
+    }
+});
+
 // export router
 export default router;
