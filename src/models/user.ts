@@ -17,15 +17,20 @@ const userSchema = new Schema(
                     "Username can only include letters, numbers, underscores, and spaces",
             },
         },
-        fingerprint: {
+        deviceId: {
             type: String,
             required: true,
             trim: true,
         },
         deviceInfo: {
-            product: String,
             brand: String,
+            model: String,
+            osVersion: String,
             ipAddress: String,
+            abi: {
+                abiArc: String,
+                supportedAbis: String,
+            },
         },
     },
     { timestamps: true }

@@ -3,7 +3,9 @@ import express from "express";
 import mongoose from "mongoose";
 import { UserType } from "../types";
 import User from "../models/user";
-import { createToken, requireSelf } from "../middleware/authentication";
+import { createToken } from "../middleware/authentication";
+import { PeekoRequest } from "../types";
+import { requireLogin } from "../middleware/authentication";
 
 // express router
 const router = express.Router();
@@ -14,13 +16,14 @@ const router = express.Router();
  */
 router.post("/createAccount", async (req, res) => {
     // destructure
-    const { username, fingerprint } = req.body;
+    const { username, deviceId, deviceInfo } = req.body;
 
     try {
         // build user object structure
         const userObject = {
             username,
-            fingerprint,
+            deviceId,
+            deviceInfo,
         };
 
         // insert to db and send response
@@ -59,11 +62,11 @@ router.post("/createAccount", async (req, res) => {
  */
 router.get("/hasAccount", async (req, res) => {
     // destructure
-    const fingerprint = req.query.fingerprint as string;
+    const deviceId = req.query.deviceId as string;
 
     try {
-        // check if fingerprint matches in the db
-        const accounts: UserType[] = await User.find({ fingerprint });
+        // check if deviceId matches in the db
+        const accounts: UserType[] = await User.find({ deviceId });
         const hasAccount = accounts.length > 0;
 
         // create JWT token/s
@@ -93,68 +96,77 @@ router.get("/hasAccount", async (req, res) => {
  * @delete
  *      DELETE request to delete a user from the db.
  */
-router.delete("/deleteAccount", requireSelf, async (req, res) => {
-    // destructure
-    const userId = req.query.userId as string;
+router.delete(
+    "/deleteAccount",
+    requireLogin,
+    async (req: PeekoRequest, res) => {
+        // destructure
+        const userId = req.currentUser!._id;
 
-    try {
-        // delete user
-        const deletedUserDocument: UserType | null =
-            await User.findByIdAndDelete(userId);
+        try {
+            // delete user
+            const deletedUserDocument: UserType | null =
+                await User.findByIdAndDelete(userId);
 
-        // if user not found
-        if (!deletedUserDocument) {
-            return res.status(400).json({
+            // if user not found
+            if (!deletedUserDocument) {
+                return res.status(400).json({
+                    success: false,
+                    error: "User not found",
+                });
+            }
+
+            // return response
+            res.status(200).json({
+                success: true,
+                deletedUserDocument,
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(400).json({
                 success: false,
-                error: "Invalid ID Error: User data was not found with the provided ID",
+                error: err.message,
             });
         }
-
-        // return response
-        res.status(200).json({
-            success: true,
-            deletedUserDocument,
-        });
-    } catch (err: any) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err.message,
-        });
     }
-});
+);
 
 /**
  * @post
  *      POST request to update the recorded IP address of the user
  */
-router.post("/updateIpAddress", async (req, res) => {
-    // destructure ip address
-    const { ipAddress, userId } = req.body;
+router.post(
+    "/updateIpAddress",
+    requireLogin,
+    async (req: PeekoRequest, res) => {
+        // destructure ip address
+        const { ipAddress } = req.body;
+        const userId = req.currentUser!._id;
 
-    try {
-        const result = await User.findByIdAndUpdate(userId, {
-            "deviceInfo.ipAddress": ipAddress,
-        });
+        try {
+            const result = await User.findByIdAndUpdate(userId, {
+                "deviceInfo.ipAddress": ipAddress,
+            });
 
-        if (!result) {
-            return res.status(400).json({
+            if (!result) {
+                return res.status(400).json({
+                    success: false,
+                    error: "User not found",
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(400).json({
                 success: false,
-                error: "User not found",
+                error: err.message,
             });
         }
-
-        res.status(200).json({
-            success: true,
-        });
-    } catch (err: any) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err.message,
-        });
     }
-});
+);
 
 // export router
 export default router;

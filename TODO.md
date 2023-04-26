@@ -58,4 +58,20 @@
 
 -   [x] Test all API endpoints
 
--   [x] Deploy backend app version 1.0.0-test.1 on heroku
+## April 24, 2023
+
+-   [x] Deploy backend app version 0.1.0-test.1
+
+## April 25, 2023
+
+-   [x] Major Testings 1
+
+## April 26, 2023
+
+-   [x] Extend and modify user model for extra information
+
+-   [x] Fix authentication & authorization bugs
+
+-   [x] Improve authentication requirements in the API
+
+-   [x] Deploy backend app version 0.1.0-test.2

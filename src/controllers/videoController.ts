@@ -5,11 +5,8 @@ import upload from "../models/multerSetup";
 import { s3_download, s3_upload, s3_delete } from "../models/s3";
 import { MulterFileType, VideoType, PeekoRequest } from "../types";
 import Video from "../models/video";
-import {
-    checkUserExists,
-    checkVideoExists,
-} from "../middleware/checkResourceExists";
-import { requireLogin, requireSelf } from "../middleware/authentication";
+import { checkVideoExists } from "../middleware/checkResourceExists";
+import { requireLogin } from "../middleware/authentication";
 
 // create router
 const router = express.Router();
@@ -20,13 +17,12 @@ const router = express.Router();
  */
 router.post(
     "/uploadVideo",
-    requireSelf,
-    checkUserExists,
     upload.single("videoFile"),
-    async (req, res) => {
+    requireLogin,
+    async (req: PeekoRequest, res) => {
         // destructure
-        const uploaderId: string = req.body.uploaderId;
-        const uploaderUsername: string = req.body.uploaderUsername;
+        const uploaderId: string = req.currentUser!._id;
+        const uploaderUsername: string = req.currentUser!.username;
         const videoFile: MulterFileType = req.file!;
 
         try {
@@ -93,14 +89,11 @@ router.get(
     requireLogin,
     checkVideoExists,
     async (req: PeekoRequest, res) => {
-        // destructure
-        const userId = req.query.username as string;
-
         // get video document from request object (attached by checkVideoExists handler)
         const videoData = req.resource as VideoType;
 
         // check if user liked the video
-        const selfLikedVideo = videoData.likes.includes(userId);
+        const selfLikedVideo = videoData.likes.includes(req.currentUser!._id);
 
         try {
             // return video data
@@ -164,39 +157,53 @@ router.post("/getVideos", requireLogin, async (req, res) => {
  * @delete
  *      DELETE request to delete a video from s3 and db
  */
-router.delete("/deleteVideo", requireSelf, async (req, res) => {
-    // destructure
-    const videoKey = req.query.videoKey as string;
+router.delete(
+    "/deleteVideo",
+    checkVideoExists,
+    requireLogin,
+    async (req: PeekoRequest, res) => {
+        // destructure
+        const videoDocument = req.resource as VideoType;
+        const videoKey = req.query.videoKey as string;
 
-    try {
-        // delete video document from db
-        const deletedVideoDocument: VideoType | null =
-            await Video.findOneAndDelete({ videoKey });
+        try {
+            // if video does not exist
+            if (!videoDocument) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Invalid Key Error: Video data was not found with the provided key",
+                });
+            }
 
-        // check if video data was deleted from db
-        if (!deletedVideoDocument) {
-            return res.status(400).json({
+            // if deleter is not publisher
+            if (req.currentUser!._id !== videoDocument.uploaderId) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Unauthorized Action",
+                });
+            }
+
+            // delete video document from db
+            const deletedVideoDocument: VideoType | null =
+                await Video.findOneAndDelete({ videoKey });
+
+            // delete video file from s3
+            await s3_delete(videoKey);
+
+            // return response
+            res.status(200).json({
+                success: true,
+                deletedVideoDocument,
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(400).json({
                 success: false,
-                error: "Invalid Key Error: Video data was not found with the provided key",
+                error: err.message,
             });
         }
-
-        // delete video file from s3
-        await s3_delete(videoKey);
-
-        // return response
-        res.status(200).json({
-            success: true,
-            deletedVideoDocument,
-        });
-    } catch (err: any) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err.message,
-        });
     }
-});
+);
 
 // export router
 export default router;

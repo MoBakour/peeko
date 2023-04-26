@@ -19,7 +19,7 @@ UserObject = {
         trim: true,
         validationRegex: /^[a-zA-Z0-9_ ]+$/,
     },
-    fingerprint: {
+    deviceId: {
         type: String,
         required: true,
         trim: true,
@@ -133,9 +133,9 @@ CommentObject = {
 
 This route creates a new user profile/account.
 
-With the request body there must be attached a fingerprint to identify the device that was used to create the account. And a username for the user profile. The username must be unique accross the application and must pass a few validation requirements mentioned below.
+With the request body there must be attached a deviceId to identify the device that was used to create the account. And a username for the user profile. The username must be unique accross the application and must pass a few validation requirements mentioned below.
 
-About the fingerprint. An account is associated with the device, so if a user creates an account for the first time, it is to be attached and related to the client device for ever, and the fingerprint is a way to detect the relationship. If the app was uninstalled and then re-installed again, the fingerprint is used to detect the account. The only way to cut the relation between the account and the device is by deleting the account.
+About the deviceId. An account is associated with the device, so if a user creates an account for the first time, it is to be attached and related to the client device for ever, and the deviceId is a way to detect the relationship. If the app was uninstalled and then re-installed again, the deviceId is used to detect the account. The only way to cut the relation between the account and the device is by deleting the account.
 
 Note that a single device can hold multiple accounts, but a single account cannot be used on multiple devices.
 
@@ -143,11 +143,24 @@ About the token. When an account is created, a token is sent back from the serve
 
 Expected **_JSON Request Body_**:
 
--   `fingerprint` (string) a fingerprint
+-   `deviceId` (string) the client device identification string
 -   `username` (string) a username
     -   username max length of 24 characters
     -   username should only include letters, numbers, underscores, and spaces are allowed
     -   username must be unique
+-   `deviceInfo` (object) has the following schema:
+    ```js
+    {
+        brand: String,
+        model: String,
+        osVersion: String,
+        ipAddress: String,
+        abi: {
+            abiArc: String,
+            supportedAbis: String,
+        },
+    }
+    ```
 
 Expected Response JSON Objects:
 
@@ -169,17 +182,17 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [GET] /user/hasAccount<span style="color:darkred">?fingerprint=<span style="color:red">{{ fingerprint key }}</span></span>
+#### - [GET] /user/hasAccount<span style="color:darkred">?deviceId=<span style="color:red">{{ deviceId key }}</span></span>
 
-This route checks if a user with the given fingerprint exists in the database.
+This route checks if a user with the given deviceId exists in the database.
 
-Replace {{ fingerprint key }} with the stored user fingerprint key.
+Replace {{ deviceId key }} with the stored user deviceId key.
 
-If an account was found associated with the given fingerprint, a response with `hasAccount` set to true will be returned, as well as an `accounts` array with the user account objects that fall under the givern fingerprint, and finally `tokens` array of objects, each object containing `userId` property for the account id, and `token` property with the token of that account. Otherwise, if no account was found under the given fingerprint, `hasAccount` will be set to false in the response object, and `accounts` & `tokens` will be an empty arrays.
+If an account was found associated with the given deviceId, a response with `hasAccount` set to true will be returned, as well as an `accounts` array with the user account objects that fall under the given deviceId, and finally `tokens` array of objects, each object containing `userId` property for the account id, and `token` property with the token of that account. Otherwise, if no account was found under the given deviceId, `hasAccount` will be set to false in the response object, and `accounts` & `tokens` will be an empty arrays.
 
 Expected **_Query Parameters_**:
 
--   `fingerprint`: user account fingerprint
+-   `deviceId`: user account deviceId
 
 Expected Response JSON Objects:
 
@@ -188,8 +201,8 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        hasAccount: Boolean, // specifies whether the fingerprint has accounts associated with it
-        accounts: UserObject[] // an array of accounts associated with the fingerprint
+        hasAccount: Boolean, // specifies whether the deviceId has accounts associated with it
+        accounts: UserObject[] // an array of accounts associated with the deviceId
         tokens: TokenObject[] // an array of token objects of the following format: { userId: string, token: string }
     }
     ```
@@ -202,15 +215,11 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [DELETE] /user/deleteAccount<span style="color:darkred">?userId=<span style="color:red">{{ user id }}</span></span>
+#### - [DELETE] /user/deleteAccount
 
 This route deletes an existing user profile/account.
 
 A delete operation to the user account will be attempted. If succeeded, the deleted user object will be returned with the response, otherwise, a failure response will be sent.
-
-Expected **_Query Parameters_**:
-
--   `userId`: user identification number
 
 Expected Response JSON Objects:
 
@@ -240,8 +249,6 @@ This route uploads a video to the server, the response object contains the video
 
 Expected **_JSON Request Body_**:
 
--   `uploaderId` (string) the user id of the uploader account
--   `uploaderUsername` (string) the username of the uploader account
 -   `videoFile` (File) the posted video file
 
 Expected Response JSON Objects:
@@ -286,16 +293,13 @@ Expected **_Response_**:
     }
     ```
 
-#### - [GET] /video/download/videoData<span style="color:darkred">?videoKey=<span style="color:red">{{ video key }}</span>&userId=<span style="color:red">{{ user id }}</span></span>
+#### - [GET] /video/download/videoData<span style="color:darkred">?videoKey=<span style="color:red">{{ video key }}</span></span>
 
 This route gets a video data from the server. (It gets the video data only and not the video itself).
-
-The userId is required to decide whether the user has the video liked or not to decide whether the like button should appear as liked or unliked in the UI.
 
 Expected **_Query Parameters_**:
 
 -   `videoKey`: the video key to identify the video targeted for download
--   `userId`: the id of the user account that has sent the request
 
 Expected Response JSON Objects:
 
@@ -417,7 +421,6 @@ If the video was found with the provided video key, a comment will be attached t
 
 Expected **_JSON Request Body_**:
 
--   `commentorId` (string) the user id of the commentor
 -   `comment` (string) the comment content
 -   `videoKey` (string) the key to the video to attach the comment
 
@@ -482,7 +485,6 @@ If a like already exists on the post by the same user, the process will be rejec
 
 Expected **_JSON Request Body_**:
 
--   `userId` (string) the id of the user attempting the like action on the post
 -   `videoKey` (string) the key of the video to add the like on
 
 Expected Response JSON Objects:
@@ -523,7 +525,6 @@ If the post was not even liked, the process will be rejected.
 
 Expected **_JSON Request Body_**:
 
--   `userId` (string) the id of the user attempting the like action on the post
 -   `videoKey` (string) the key of the video to add the like on
 
 Expected Response JSON Objects:

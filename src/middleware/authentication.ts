@@ -1,7 +1,9 @@
 // imports
+import fs from "fs";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { Response, NextFunction } from "express";
 import { PeekoRequest } from "../types";
+import User from "../models/user";
 
 // token secret key
 const TOKEN_SECRET_KEY = process.env.TOKEN_SECRET_KEY as string;
@@ -42,9 +44,12 @@ export const authenticateUser = async (
         if (bearer.toLowerCase() !== "bearer" || !token) return next();
 
         // verify the token and attach the decoded user id to the request object
-        jwt.verify(token, TOKEN_SECRET_KEY, (err, decoded) => {
+        jwt.verify(token, TOKEN_SECRET_KEY, async (err, decoded) => {
             if (!err && decoded) {
-                req.currentUser = (decoded as JwtPayload).userId;
+                const userId = (decoded as JwtPayload).userId;
+                const user = await User.findById(userId);
+
+                req.currentUser = user;
             }
             next();
         });
@@ -58,35 +63,6 @@ export const authenticateUser = async (
 };
 
 /**
- * This function requires that the authenticated user is the same user that is attempting the action
- * possible sources of user id:
- *      - req.body.userId (post/put requests)
- *      - req.query.userId (get/delete requests)
- *      - req.body.commentorId (comment request)
- */
-export const requireSelf = (
-    req: PeekoRequest,
-    res: Response,
-    next: NextFunction
-) => {
-    // destructure
-    const { currentUser } = req;
-    const affectedUserId = (req.query.userId ||
-        req.body.userId ||
-        req.body.commentorId ||
-        req.body.uploaderId) as string;
-
-    if (!currentUser || currentUser !== affectedUserId) {
-        return res.status(400).json({
-            success: false,
-            error: "Unauthorized Action",
-        });
-    }
-
-    next();
-};
-
-/**
  * This function only allows access for those who are logged in the app
  */
 export const requireLogin = (
@@ -96,6 +72,14 @@ export const requireLogin = (
 ) => {
     if (req.currentUser) next();
     else {
+        if (req.path === "/video/uploadVideo") {
+            fs.unlink(req.file!.path, (err) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+        }
+
         res.status(400).json({
             success: false,
             error: "Unauthorized Action",

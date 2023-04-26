@@ -8,13 +8,13 @@ export type MulterFileType = Express.Multer.File;
 // Request with resource type
 export interface PeekoRequest extends Request {
     resource?: UserType | CommentType | VideoType;
-    currentUser?: string;
+    currentUser?: UserType | null;
 }
 
 // User type
 export interface UserType extends Document {
     username: string;
-    fingerprint: string;
+    deviceId: string;
 }
 
 // Comment type
