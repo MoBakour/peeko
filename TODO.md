@@ -75,3 +75,13 @@
 -   [x] Improve authentication requirements in the API
 
 -   [x] Deploy backend app version 0.1.0-test.2
+
+## April 28, 2023
+
+-   [x] Removed the need of authorization for downloading video file
+
+## LATER ON
+
+-   [ ] Join /like and /unlike routes under one route which toggles like/unlike at the same time
+
+-   [ ] Project response object to minimize data usage

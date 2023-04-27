@@ -58,27 +58,22 @@ router.post(
  * @get
  *      GET request to get a specific video file through a provided video key
  */
-router.get(
-    "/download/videoFile",
-    requireLogin,
-    checkVideoExists,
-    async (req, res) => {
-        // destructure
-        const videoKey = req.query.videoKey as string;
+router.get("/download/videoFile", checkVideoExists, async (req, res) => {
+    // destructure
+    const videoKey = req.query.videoKey as string;
 
-        try {
-            // get video from s3
-            const readStream = s3_download(videoKey);
-            readStream.pipe(res);
-        } catch (err: any) {
-            console.error(err);
-            res.status(400).json({
-                success: false,
-                error: err.message,
-            });
-        }
+    try {
+        // get video from s3
+        const readStream = s3_download(videoKey);
+        readStream.pipe(res);
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
+        });
     }
-);
+});
 
 /**
  * @get
