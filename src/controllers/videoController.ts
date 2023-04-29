@@ -58,7 +58,7 @@ router.post(
  * @get
  *      GET request to get a specific video file through a provided video key
  */
-router.get("/download/videoFile", checkVideoExists, async (req, res) => {
+router.get("/streamVideo", checkVideoExists, async (req, res) => {
     // destructure
     const videoKey = req.query.videoKey as string;
 
@@ -74,38 +74,6 @@ router.get("/download/videoFile", checkVideoExists, async (req, res) => {
         });
     }
 });
-
-/**
- * @get
- *      GET request to get a specific video data through a provided video key
- */
-router.get(
-    "/download/videoData",
-    requireLogin,
-    checkVideoExists,
-    async (req: PeekoRequest, res) => {
-        // get video document from request object (attached by checkVideoExists handler)
-        const videoData = req.resource as VideoType;
-
-        // check if user liked the video
-        const selfLikedVideo = videoData.likes.includes(req.currentUser!._id);
-
-        try {
-            // return video data
-            res.status(200).json({
-                success: true,
-                videoData,
-                selfLikedVideo,
-            });
-        } catch (err: any) {
-            console.error(err);
-            res.status(400).json({
-                success: false,
-                error: err.message,
-            });
-        }
-    }
-);
 
 /**
  * @post
@@ -132,6 +100,7 @@ router.post("/getVideos", requireLogin, async (req, res) => {
             { $match: { videoKey: { $nin: viewed } } },
             { $sample: { size: count } },
             { $group: { _id: "$_id", doc: { $first: "$$ROOT" } } },
+            { $replaceWith: "$doc" },
         ]);
 
         // return result

@@ -25,9 +25,15 @@ UserObject = {
         trim: true,
     },
     deviceInfo: {
-        product: String,
+        fingerprint: String,
         brand: String,
+        model: String,
+        osVersion: String,
         ipAddress: String,
+        abi: {
+            abiArc: String,
+            supportedAbis: String,
+        },
     },
     createdAt: {
         type: Date,
@@ -148,13 +154,13 @@ Expected **_JSON Request Body_**:
     -   username max length of 24 characters
     -   username should only include letters, numbers, underscores, and spaces are allowed
     -   username must be unique
--   `deviceInfo` (object) has the following schema:
+-   `deviceInfo` (object) has the following schema (not required, not all `deviceInfo` fields required):
     ```js
     {
+        fingerprint: String,
         brand: String,
         model: String,
         osVersion: String,
-        ipAddress: String,
         abi: {
             abiArc: String,
             supportedAbis: String,
@@ -202,7 +208,7 @@ Expected Response JSON Objects:
     {
         success: true,
         hasAccount: Boolean, // specifies whether the deviceId has accounts associated with it
-        accounts: UserObject[] // an array of accounts associated with the deviceId
+        accounts: UserObject[], // an array of accounts associated with the deviceId
         tokens: TokenObject[] // an array of token objects of the following format: { userId: string, token: string }
     }
     ```
@@ -229,6 +235,32 @@ Expected Response JSON Objects:
     {
         success: true,
         deletedUserDocument: UserObject // the deleted user object
+    }
+    ```
+
+-   Failure:
+
+    ```js
+    {
+        success: false,
+        error: String
+    }
+    ```
+
+#### - [PUT] /user/updateIpAddress
+
+This route pings the server to update the IP address of the current user.
+No params or request body is expected for this request, as it just pings the server. The server handles getting the IP address and updating it in the database.
+Being signed into the app with a user account and having the authorization token attached to the request headers is sufficient.
+
+Expected Response JSON Objects:
+
+-   Success:
+
+    ```js
+    {
+        success: true,
+        ipAddress: String
     }
     ```
 
@@ -270,7 +302,7 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [GET] /video/download/videoFile<span style="color:darkred">?videoKey=<span style="color:red">{{ video key }}</span></span>
+#### - [GET] /video/streamVideo<span style="color:darkred">?videoKey=<span style="color:red">{{ video key }}</span></span>
 
 This route gets a video file from the server. (It gets the video itself only and not the video data).
 
@@ -283,35 +315,7 @@ Expected **_Query Parameters_**:
 Expected **_Response_**:
 
 -   Success:
-    In case of a success. The response is a a readable video file stream to be displayed in the frontend.
-
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
-
-#### - [GET] /video/download/videoData<span style="color:darkred">?videoKey=<span style="color:red">{{ video key }}</span></span>
-
-This route gets a video data from the server. (It gets the video data only and not the video itself).
-
-Expected **_Query Parameters_**:
-
--   `videoKey`: the video key to identify the video targeted for download
-
-Expected Response JSON Objects:
-
--   Success:
-
-    ```js
-    {
-        success: true,
-        videoData: VideoObject // an object with the video information
-        selfLikedVideo: Boolean // specifies whether the current user client has previously liked the video or not
-    }
-    ```
+    In case of a success. The response is a a readable video file stream to be displayed in the client-side.
 
 -   Failure:
     ```js
@@ -370,7 +374,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        error: VideoDocument // the video that was deleted
+        deletedVideoDocument: VideoDocument // the video that was deleted
     }
     ```
 
@@ -461,7 +465,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        deletedCommentDocument: CommentObject // the deleted comment object
+        deletedCommentDocument: CommentObject, // the deleted comment object
         newCommentsNumber: Number // the new up-to-date number of comments after the deleted comment
     }
     ```
@@ -475,6 +479,39 @@ Expected Response JSON Objects:
     ```
 
 ## Feedback Endpoints
+
+#### - [PUT] /feedback/toggleLike
+
+This route toggles like on a video post.
+
+If a post was not found the process will be rejected.
+If the post was already liked by the user, the post will be unliked.
+If the post was not liked by the user, the post will be liked.
+
+Expected **_JSON Request Body_**:
+
+-   `videoKey` (string) the key of the video to toggle the like on
+
+Expected Response JSON Objects:
+
+-   Success:
+
+    ```js
+    {
+        success: true,
+        likesCount: Number, // the new number of likes on the post (after the toggle action)
+        operation: String // either "LIKE" or "UNLIKE"
+    }
+    ```
+
+-   Failure:
+
+    ```js
+    {
+        success: false,
+        error: String
+    }
+    ```
 
 #### - [PUT] /feedback/likeVideo
 
@@ -494,7 +531,8 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        likesCount: Number // the new number of likes on the post (after the like action)
+        likesCount: Number, // the new number of likes on the post (after the like action)
+        operation: "LIKE"
     }
     ```
 
@@ -534,7 +572,8 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        likesCount: Number // the new number of likes on the post (after the unlike action)
+        likesCount: Number, // the new number of likes on the post (after the unlike action)
+        operation: "UNLIKE"
     }
     ```
 

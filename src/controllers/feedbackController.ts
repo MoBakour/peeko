@@ -9,6 +9,54 @@ const router = express.Router();
 
 /**
  * @put
+ *      PUT request to toggle like on a video post
+ */
+router.put("/toggleLike", requireLogin, async (req: PeekoRequest, res) => {
+    // destructure
+    const { videoKey } = req.body;
+    const userId = req.currentUser!._id;
+
+    try {
+        const videoDocument = await Video.findOne({ videoKey });
+
+        // if video not found
+        if (!videoDocument) {
+            return res.status(400).json({
+                success: false,
+                error: "Video not found",
+            });
+        }
+
+        // decide which operation to perform (like/unlike)
+        const alreadyLiked = videoDocument.likes.includes(userId);
+        const updateOperation = alreadyLiked
+            ? { $pull: { likes: userId } }
+            : { $addToSet: { likes: userId } };
+
+        // perform operation
+        const updatedDocument = await Video.findOneAndUpdate(
+            { videoKey },
+            updateOperation,
+            { new: true }
+        );
+
+        // send back response
+        res.status(200).json({
+            success: true,
+            likesCount: updatedDocument?.likes.length,
+            operation: alreadyLiked ? "UNLIKE" : "LIKE",
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(200).json({
+            success: false,
+            error: err.message,
+        });
+    }
+});
+
+/**
+ * @put
  *      PUT request to like a video post
  */
 router.put("/likeVideo", requireLogin, async (req: PeekoRequest, res) => {
@@ -45,6 +93,7 @@ router.put("/likeVideo", requireLogin, async (req: PeekoRequest, res) => {
         res.status(200).json({
             success: true,
             likesCount: preUpdatedDocument.likes.length + 1,
+            operation: "LIKE",
         });
     } catch (err: any) {
         console.error(err);
@@ -93,6 +142,7 @@ router.put("/unlikeVideo", requireLogin, async (req: PeekoRequest, res) => {
         res.status(200).json({
             success: true,
             likesCount: preUpdatedDocument.likes.length - 1,
+            operation: "UNLIKE",
         });
     } catch (err: any) {
         console.error(err);

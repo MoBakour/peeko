@@ -78,10 +78,18 @@
 
 ## April 28, 2023
 
--   [x] Removed the need of authorization for downloading video file
+-   [x] Remove the need of authorization for downloading video file
 
-## LATER ON
+## April 30, 2023
 
--   [ ] Join /like and /unlike routes under one route which toggles like/unlike at the same time
+-   [x] Remove an unnecessary route from video controller, (the /video/download/videoData route)
 
--   [ ] Project response object to minimize data usage
+-   [x] Change the naming convention of routes in video controller
+
+-   [x] Add a new route /feedback/toggleLike which joins both routes /feedback/likeVideo and /feedback/unlikeVideo
+
+-   [x] Store user ip address when user creates an account
+
+-   [x] Create new route /user/updateIpAddress which updates the stored user ip address when requested
+
+-   [x] Deploy backend app version 0.1.0-test.3

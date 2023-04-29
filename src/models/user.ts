@@ -23,6 +23,7 @@ const userSchema = new Schema(
             trim: true,
         },
         deviceInfo: {
+            fingerprint: String,
             brand: String,
             model: String,
             osVersion: String,

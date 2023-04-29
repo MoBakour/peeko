@@ -1,6 +1,7 @@
 // imports
 import express from "express";
 import mongoose from "mongoose";
+import requestIp from "request-ip";
 import { UserType } from "../types";
 import User from "../models/user";
 import { createToken } from "../middleware/authentication";
@@ -19,11 +20,14 @@ router.post("/createAccount", async (req, res) => {
     const { username, deviceId, deviceInfo } = req.body;
 
     try {
+        // get user ip address
+        const ipAddress = requestIp.getClientIp(req);
+
         // build user object structure
         const userObject = {
             username,
             deviceId,
-            deviceInfo,
+            deviceInfo: { ...deviceInfo, ipAddress },
         };
 
         // insert to db and send response
@@ -38,17 +42,32 @@ router.post("/createAccount", async (req, res) => {
             token,
         });
     } catch (err: any) {
+        // if not mongoose validation error, log to server console
         if (
-            err.code === 11000 ||
-            err instanceof mongoose.Error.ValidationError
+            err.code !== 11000 &&
+            !(err instanceof mongoose.Error.ValidationError)
         ) {
-            return res.status(400).json({
-                success: false,
-                error: err.message,
-            });
+            console.error(err);
         }
 
-        console.error(err);
+        // modify error message if duplicate username error
+        if (
+            err.code === 11000 &&
+            Object.keys(err.keyValue).includes("username")
+        ) {
+            err.message = `Username ${username} is already used. Try another username`;
+        }
+
+        // modify error message if username validation error
+        const errorProperties = (
+            Object.values(err.errors)[0] as {
+                properties: { path: string; message: string };
+            }
+        ).properties;
+        if (errorProperties.path === "username") {
+            err.message = errorProperties.message;
+        }
+
         res.status(400).json({
             success: false,
             error: err.message,
@@ -132,41 +151,40 @@ router.delete(
 );
 
 /**
- * @post
- *      POST request to update the recorded IP address of the user
+ * @put
+ *      PUT request to update the recorded IP address of the user
  */
-router.post(
-    "/updateIpAddress",
-    requireLogin,
-    async (req: PeekoRequest, res) => {
-        // destructure ip address
-        const { ipAddress } = req.body;
-        const userId = req.currentUser!._id;
+router.put("/updateIpAddress", requireLogin, async (req: PeekoRequest, res) => {
+    // destructure ip address
+    const userId = req.currentUser!._id;
 
-        try {
-            const result = await User.findByIdAndUpdate(userId, {
-                "deviceInfo.ipAddress": ipAddress,
-            });
+    try {
+        // get ipAddress
+        const ipAddress = requestIp.getClientIp(req);
 
-            if (!result) {
-                return res.status(400).json({
-                    success: false,
-                    error: "User not found",
-                });
-            }
+        const result = await User.findByIdAndUpdate(userId, {
+            "deviceInfo.ipAddress": ipAddress,
+        });
 
-            res.status(200).json({
-                success: true,
-            });
-        } catch (err: any) {
-            console.error(err);
-            res.status(400).json({
+        if (!result) {
+            return res.status(400).json({
                 success: false,
-                error: err.message,
+                error: "User not found",
             });
         }
+
+        res.status(200).json({
+            success: true,
+            ipAddress,
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
+        });
     }
-);
+});
 
 // export router
 export default router;
