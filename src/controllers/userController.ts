@@ -17,7 +17,8 @@ const router = express.Router();
  */
 router.post("/createAccount", async (req, res) => {
     // destructure
-    const { username, deviceId, deviceInfo } = req.body;
+    let { username, deviceId, deviceInfo } = req.body;
+    deviceInfo = deviceInfo || {};
 
     try {
         // get user ip address
