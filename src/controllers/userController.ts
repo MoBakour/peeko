@@ -60,13 +60,9 @@ router.post("/createAccount", async (req, res) => {
         }
 
         // modify error message if username validation error
-        const errorProperties = (
-            Object.values(err.errors)[0] as {
-                properties: { path: string; message: string };
-            }
-        ).properties;
-        if (errorProperties.path === "username") {
-            err.message = errorProperties.message;
+        const usernameValidationError = "Username max length is 24 characters";
+        if (err.message.includes(usernameValidationError)) {
+            err.message = usernameValidationError;
         }
 
         res.status(400).json({
