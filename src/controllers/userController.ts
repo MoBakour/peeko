@@ -7,6 +7,7 @@ import User from "../models/user";
 import { createToken } from "../middleware/authentication";
 import { PeekoRequest } from "../types";
 import { requireLogin } from "../middleware/authentication";
+import { validateUsername } from "../middleware/validation";
 
 // express router
 const router = express.Router();
@@ -17,10 +18,19 @@ const router = express.Router();
  */
 router.post("/createAccount", async (req, res) => {
     // destructure
-    let { username, deviceId, deviceInfo } = req.body;
-    deviceInfo = deviceInfo || {};
+    const { username, deviceId } = req.body;
+    const deviceInfo = req.body.deviceInfo || {};
 
     try {
+        // validate username
+        const error = validateUsername(username);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                error,
+            });
+        }
+
         // get user ip address
         const ipAddress = requestIp.getClientIp(req);
 
@@ -57,12 +67,6 @@ router.post("/createAccount", async (req, res) => {
             Object.keys(err.keyValue).includes("username")
         ) {
             err.message = `Username ${username} is already used. Try another username`;
-        }
-
-        // modify error message if username validation error
-        const usernameValidationError = "Username max length is 24 characters";
-        if (err.message.includes(usernameValidationError)) {
-            err.message = usernameValidationError;
         }
 
         res.status(400).json({

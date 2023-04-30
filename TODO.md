@@ -80,7 +80,7 @@
 
 -   [x] Remove the need of authorization for downloading video file
 
-## April 30, 2023
+## April 29, 2023
 
 -   [x] Remove an unnecessary route from video controller, (the /video/download/videoData route)
 
@@ -94,8 +94,16 @@
 
 -   [x] Deploy backend app version 0.1.0-test.3
 
-## DID
+## April 30, 2023
 
 -   [x] Added CORS
 
 -   [x] Fixed bug deviceInfo not being optional when creating user account
+
+-   [x] Switched to custom username validation rather than mongoose validation
+
+-   [x] Deploy backend app version 0.1.0-test.4
+
+## TODO
+
+-   [ ] Keep CORS in mind
