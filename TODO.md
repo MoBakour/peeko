@@ -93,3 +93,9 @@
 -   [x] Create new route /user/updateIpAddress which updates the stored user ip address when requested
 
 -   [x] Deploy backend app version 0.1.0-test.3
+
+## DID
+
+-   [x] Added CORS
+
+-   [x] Fixed bug deviceInfo not being optional when creating user account

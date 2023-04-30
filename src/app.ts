@@ -5,6 +5,7 @@ dotenv.config();
 // import packages
 import express from "express";
 import mongoose from "mongoose";
+import cors from "cors";
 
 // import routes
 import userController from "./controllers/userController";
@@ -19,6 +20,9 @@ import { authenticateUser } from "./middleware/authentication";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// set CORS
+app.use(cors());
 
 // env variables
 const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
