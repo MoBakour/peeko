@@ -86,6 +86,7 @@ router.post("/getVideos", requireLogin, async (req, res) => {
     const viewed: string[] = req.body.viewed;
 
     console.log(viewed);
+    console.log(typeof viewed);
 
     try {
         /**
