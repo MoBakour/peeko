@@ -85,6 +85,8 @@ router.post("/getVideos", requireLogin, async (req, res) => {
     const count = parseInt(req.body.count as string) || 10;
     const viewed: string[] = req.body.viewed;
 
+    console.log(viewed);
+
     try {
         /**
          * Use MongoDB $match aggregation stage to exclude
@@ -109,7 +111,7 @@ router.post("/getVideos", requireLogin, async (req, res) => {
             videos,
         });
     } catch (err: any) {
-        console.error(err);
+        // console.error(err);
         res.status(400).json({
             success: false,
             error: err.message,
