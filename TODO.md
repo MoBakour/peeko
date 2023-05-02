@@ -122,7 +122,11 @@
 
 -   [x] Make /user/signup & /user/login & /user/logout routes for web clients
 
+-   [x] Separate web user routes from mobile user routes from general user routes
+
 -   [x] Rename response object fields to follow conventions
+
+-   [x] Change response object field names to follow unified convention
 
 -   [x] Deploy backend app version 0.1.0-test.5
 

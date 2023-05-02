@@ -11,6 +11,7 @@ import cookieParser from "cookie-parser";
 // import routes
 import userController from "./controllers/mobileUserController";
 import mobileUserController from "./controllers/mobileUserController";
+import webUserController from "./controllers/webUserController";
 import videoController from "./controllers/videoController";
 import commentController from "./controllers/commentController";
 import feedbackController from "./controllers/feedbackController";
@@ -49,8 +50,9 @@ mongoose
 app.use(authenticateUser);
 
 // use routes
-app.use("/mobile/user", mobileUserController);
 app.use("/user", userController);
+app.use("/mobile/user", mobileUserController);
+app.use("/web/user", webUserController);
 app.use("/video", videoController);
 app.use("/comment", commentController);
 app.use("/feedback", feedbackController);
