@@ -37,22 +37,41 @@ export const authenticateUser = async (
     next: NextFunction
 ) => {
     try {
-        // check if authorization header exists and has a valid syntax
-        const authHeader = req.headers["authorization"];
-        if (!authHeader) return next();
-        const [bearer, token] = authHeader.split(" ");
-        if (bearer.toLowerCase() !== "bearer" || !token) return next();
+        let token: string | undefined = undefined;
 
-        // verify the token and attach the decoded user id to the request object
-        jwt.verify(token, TOKEN_SECRET_KEY, async (err, decoded) => {
-            if (!err && decoded) {
-                const userId = (decoded as JwtPayload).userId;
-                const user = await User.findById(userId);
-
-                req.currentUser = user;
+        /**
+         * if token in cookies, take it
+         * otherwise if token in headers, take it
+         */
+        if (req.cookies && req.cookies.token) {
+            token = req.cookies.token;
+        } else {
+            const authHeader = req.headers["authorization"];
+            if (authHeader) {
+                const [bearer, headerToken] = authHeader.split(" ");
+                if (bearer.toLowerCase() === "bearer" && headerToken) {
+                    token = headerToken;
+                }
             }
-            next();
-        });
+        }
+
+        /**
+         * if token
+         *      verify token
+         *          if verified
+         *              find user document and attach it to the request object
+         */
+        if (token) {
+            jwt.verify(token, TOKEN_SECRET_KEY, async (err, decoded) => {
+                if (!err && decoded) {
+                    const userId = (decoded as JwtPayload).userId;
+                    const user = await User.findById(userId);
+
+                    req.currentUser = user;
+                }
+                next();
+            });
+        } else next();
     } catch (err: any) {
         console.error(err);
         res.status(400).json({

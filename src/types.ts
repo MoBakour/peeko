@@ -11,11 +11,27 @@ export interface PeekoRequest extends Request {
     currentUser?: UserType | null;
 }
 
-// User type
-export interface UserType extends Document {
+// User Object Type
+export interface UserObjectType {
     username: string;
-    deviceId: string;
+    email?: string;
+    password?: string;
+    deviceId?: string;
+    deviceInfo?: {
+        fingerprint?: string;
+        brand?: string;
+        model?: string;
+        osVersion?: string;
+        ipAddress?: string;
+        abi?: {
+            abiArc?: string;
+            supportedAbis?: string;
+        };
+    };
 }
+
+// User type
+export interface UserType extends UserObjectType, Document {}
 
 // Comment type
 export interface CommentType extends Document {

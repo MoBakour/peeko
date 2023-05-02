@@ -10,7 +10,7 @@ export const checkVideoExists = async (
     next: NextFunction
 ) => {
     // destructure
-    const videoKey = (req.query.videoKey || req.body.videoKey) as string;
+    const videoKey = (req.body.videoKey || req.params.videoKey) as string;
 
     try {
         // get video

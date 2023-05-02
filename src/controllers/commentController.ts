@@ -12,9 +12,9 @@ const router = express.Router();
  * @get
  *      GET request to get comments of a specific video through provided video id
  */
-router.get("/getComments", requireLogin, async (req, res) => {
+router.get("/getComments/:videoKey", requireLogin, async (req, res) => {
     // destructure
-    const videoKey = req.query.videoKey as string;
+    const { videoKey } = req.params;
 
     try {
         // get comments
@@ -93,11 +93,11 @@ router.post("/postComment", requireLogin, async (req: PeekoRequest, res) => {
  *      DELETE request to delete comments form a video through a provided comment id
  */
 router.delete(
-    "/deleteComment",
+    "/deleteComment/:commentId",
     requireLogin,
     async (req: PeekoRequest, res) => {
         // destructure
-        const commentId = req.query.commentId as string;
+        const { commentId } = req.params;
 
         try {
             const commentDocument = await Comment.findById(commentId);

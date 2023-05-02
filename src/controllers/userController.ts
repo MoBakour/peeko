@@ -2,28 +2,51 @@
 import express from "express";
 import mongoose from "mongoose";
 import requestIp from "request-ip";
-import { UserType } from "../types";
+import bcrypt from "bcrypt";
+import { createToken, requireLogin } from "../middleware/authentication";
+import { PeekoRequest, UserObjectType, UserType } from "../types";
 import User from "../models/user";
-import { createToken } from "../middleware/authentication";
-import { PeekoRequest } from "../types";
-import { requireLogin } from "../middleware/authentication";
-import { validateUsername } from "../middleware/validation";
+import { validateUser_web } from "../middleware/validation";
 
-// express router
+// create router
 const router = express.Router();
+
+// token cookie options
+const tokenCookieOptions = (maxAge: number = 60 * 60 * 24 * 14) => {
+    return {
+        maxAge,
+        httpOnly: true,
+    };
+};
 
 /**
  * @post
- *      POST request to attempt signup from client.
+ *      POST request to attempt signup (web-client)
  */
-router.post("/createAccount", async (req, res) => {
+router.post("/signup", async (req, res) => {
     // destructure
-    const { username, deviceId } = req.body;
-    const deviceInfo = req.body.deviceInfo || {};
+    const { username, email, password } = req.body;
 
     try {
-        // validate username
-        const error = validateUsername(username);
+        // get user ip address
+        const ipAddress = requestIp.getClientIp(req) || undefined;
+
+        // hash password
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // build user object structure
+        const userObject: UserObjectType = {
+            username,
+            email,
+            password: hashedPassword,
+            deviceInfo: {
+                ipAddress,
+            },
+        };
+
+        // validate user object
+        const error = validateUser_web(userObject);
         if (error) {
             return res.status(400).json({
                 success: false,
@@ -31,26 +54,16 @@ router.post("/createAccount", async (req, res) => {
             });
         }
 
-        // get user ip address
-        const ipAddress = requestIp.getClientIp(req);
-
-        // build user object structure
-        const userObject = {
-            username,
-            deviceId,
-            deviceInfo: { ...deviceInfo, ipAddress },
-        };
-
-        // insert to db and send response
+        // insert to db
         const userDocument: UserType = await User.create(userObject);
 
-        // create JWT token
-        const token = await createToken(userDocument._id);
+        // create & set jwt token
+        const token = await createToken(userDocument._id.toString());
+        res.cookie("token", token, tokenCookieOptions());
 
         res.status(200).json({
             success: true,
             userDocument,
-            token,
         });
     } catch (err: any) {
         // if not mongoose validation error, log to server console
@@ -77,32 +90,50 @@ router.post("/createAccount", async (req, res) => {
 });
 
 /**
- * @get
- *      GET request to check if device has a previous account.
+ * @post
+ *      POST request to login (web-client)
  */
-router.get("/hasAccount", async (req, res) => {
+router.post("/login", async (req, res) => {
     // destructure
-    const deviceId = req.query.deviceId as string;
+    const { credential, password } = req.body;
 
     try {
-        // check if deviceId matches in the db
-        const accounts: UserType[] = await User.find({ deviceId });
-        const hasAccount = accounts.length > 0;
+        // try to find user
+        const user = await User.findOne({
+            $or: [{ username: credential }, { email: credential }],
+        });
 
-        // create JWT token/s
-        const tokens: { userId: string; token: string }[] = [];
-        for (const account of accounts) {
-            const token = (await createToken(account._id)) as string;
-            tokens.push({ userId: account._id, token });
+        // if not found
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                error: "Username or email is incorrect",
+            });
         }
 
-        // return result
-        res.status(200).json({
-            success: true,
-            hasAccount,
-            accounts,
-            tokens,
-        });
+        // if no email/password (which means user account is mobile client)
+        if (!user.email || !user.password) {
+            return res.status(400).json({
+                success: false,
+                error: "This is a mobile account, cannot be accessed on web",
+            });
+        }
+
+        // compare passwords
+        const matching = await bcrypt.compare(password, user.password);
+        if (!matching) {
+            return res.status(400).json({
+                success: false,
+                error: "Password is incorrect",
+            });
+        }
+
+        // create and set token
+        const token = await createToken(user._id.toString());
+        res.cookie("token", token, tokenCookieOptions());
+
+        // return response
+        res.status(200).json({ success: true });
     } catch (err: any) {
         console.error(err);
         res.status(400).json({
@@ -113,8 +144,17 @@ router.get("/hasAccount", async (req, res) => {
 });
 
 /**
+ * @post
+ *      POST request to logout (web-client)
+ */
+router.post("/logout", requireLogin, (req, res) => {
+    res.cookie("token", "", tokenCookieOptions(1));
+    res.status(200).json({ success: true });
+});
+
+/**
  * @delete
- *      DELETE request to delete a user from the db.
+ *      DELETE request to delete a user from the db
  */
 router.delete(
     "/deleteAccount",

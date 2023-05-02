@@ -6,9 +6,11 @@ dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 // import routes
-import userController from "./controllers/userController";
+import userController from "./controllers/mobileUserController";
+import mobileUserController from "./controllers/mobileUserController";
 import videoController from "./controllers/videoController";
 import commentController from "./controllers/commentController";
 import feedbackController from "./controllers/feedbackController";
@@ -20,9 +22,8 @@ import { authenticateUser } from "./middleware/authentication";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// set CORS
 app.use(cors());
+app.use(cookieParser());
 
 // env variables
 const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
@@ -45,6 +46,7 @@ mongoose
 app.use(authenticateUser);
 
 // use routes
+app.use("/mobile/user", mobileUserController);
 app.use("/user", userController);
 app.use("/video", videoController);
 app.use("/comment", commentController);

@@ -58,9 +58,9 @@ router.post(
  * @get
  *      GET request to get a specific video file through a provided video key
  */
-router.get("/streamVideo", checkVideoExists, async (req, res) => {
+router.get("/streamVideo/:videoKey", checkVideoExists, async (req, res) => {
     // destructure
-    const videoKey = req.query.videoKey as string;
+    const videoKey = req.params.videoKey as string;
 
     try {
         // get video from s3
@@ -74,6 +74,33 @@ router.get("/streamVideo", checkVideoExists, async (req, res) => {
         });
     }
 });
+
+/**
+ * @get
+ *      GET request to get a specific video data through a provided video key
+ */
+router.get(
+    "/getVideo/:videoKey",
+    requireLogin,
+    checkVideoExists,
+    async (req: PeekoRequest, res) => {
+        try {
+            // get video from db
+            const videoData = req.resource as VideoType;
+
+            res.status(200).json({
+                success: true,
+                videoData,
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(400).json({
+                success: false,
+                error: err.message,
+            });
+        }
+    }
+);
 
 /**
  * @post
@@ -122,23 +149,15 @@ router.post("/getVideos", requireLogin, async (req, res) => {
  *      DELETE request to delete a video from s3 and db
  */
 router.delete(
-    "/deleteVideo",
+    "/deleteVideo/:videoKey",
     checkVideoExists,
     requireLogin,
     async (req: PeekoRequest, res) => {
         // destructure
         const videoDocument = req.resource as VideoType;
-        const videoKey = req.query.videoKey as string;
+        const videoKey = req.params.videoKey as string;
 
         try {
-            // if video does not exist
-            if (!videoDocument) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Invalid Key Error: Video data was not found with the provided key",
-                });
-            }
-
             // if deleter is not publisher
             if (req.currentUser!._id !== videoDocument.uploaderId) {
                 return res.status(400).json({

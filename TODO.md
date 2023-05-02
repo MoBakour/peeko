@@ -96,14 +96,42 @@
 
 ## April 30, 2023
 
--   [x] Added CORS
+-   [x] Add CORS
 
--   [x] Fixed bug deviceInfo not being optional when creating user account
+-   [x] Fix bug deviceInfo not being optional when creating user account
 
--   [x] Switched to custom username validation rather than mongoose validation
+-   [x] Switch to custom username validation rather than mongoose validation
 
 -   [x] Deploy backend app version 0.1.0-test.4
 
+## May 1, 2023
+
+-   [x] Add /video/getVideo route
+
+-   [x] Switch from URL query to URL params
+
+-   [x] Add new optional user model fields (email and password for web clients)
+
+-   [x] Add new user object validation rules
+
+-   [x] Modify user object types in types.ts
+
+## May 2, 2023
+
+-   [x] Add support for cookie token storage for web client authentication
+
+-   [x] Make /user/signup & /user/login & /user/logout routes for web clients
+
+-   [x] Deploy backend app version 0.1.0-test.5
+
 ## TODO
+
+-   [ ] Make a max number of accounts per deviceId
+
+-   [ ] Add email verification
+
+-   [ ] Build web client-side with React.js and Next.js
+
+-   [ ] Test functionality for video sharing via link purpose
 
 -   [ ] Keep CORS in mind
