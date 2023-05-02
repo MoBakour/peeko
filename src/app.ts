@@ -30,12 +30,15 @@ const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
 const SERVER_PORT_STRING = process.env.port || process.env.PORT || "3000";
 const SERVER_PORT = parseInt(SERVER_PORT_STRING);
 
+const API_VERSION = "v0.1.0-test.5";
+
 // connect to db
 mongoose
     .connect(MONGODB_CONNECTION_STRING)
     .then(() => {
         app.listen(SERVER_PORT, () => {
             console.log(`Server running on port: ${SERVER_PORT}`);
+            console.log(`Peeko API version: ${API_VERSION}`);
         });
     })
     .catch((err) => {
@@ -51,6 +54,17 @@ app.use("/user", userController);
 app.use("/video", videoController);
 app.use("/comment", commentController);
 app.use("/feedback", feedbackController);
+
+// info route
+app.get("/api-info", (req, res) => {
+    res.status(200).json({
+        api_name: "api-peeko",
+        api_version: API_VERSION,
+        api_description: "Peeko social media platform backend API",
+        developer: "Swordax",
+        developer_contacts: "https://linktr.ee/swordax",
+    });
+});
 
 // default (404) route
 app.use((req, res) => {

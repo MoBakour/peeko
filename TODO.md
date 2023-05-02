@@ -122,6 +122,8 @@
 
 -   [x] Make /user/signup & /user/login & /user/logout routes for web clients
 
+-   [x] Rename response object fields to follow conventions
+
 -   [x] Deploy backend app version 0.1.0-test.5
 
 ## TODO

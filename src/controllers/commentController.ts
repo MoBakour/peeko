@@ -18,12 +18,12 @@ router.get("/getComments/:videoKey", requireLogin, async (req, res) => {
 
     try {
         // get comments
-        const comments = await Comment.find({ videoKey });
+        const commentDocuments = await Comment.find({ videoKey });
 
         // return response
         res.status(200).json({
             success: true,
-            comments,
+            commentDocuments,
         });
     } catch (err: any) {
         console.error(err);
@@ -60,7 +60,7 @@ router.post("/postComment", requireLogin, async (req: PeekoRequest, res) => {
         // increment number of comments on video
         const updatedVideo = await Video.findOneAndUpdate(
             { videoKey },
-            { $inc: { commentsNumber: 1 } },
+            { $inc: { commentsCount: 1 } },
             { new: true }
         );
 
@@ -77,7 +77,7 @@ router.post("/postComment", requireLogin, async (req: PeekoRequest, res) => {
         res.status(200).json({
             success: true,
             commentDocument,
-            newCommentsNumber: updatedVideo.commentsNumber,
+            newCommentsCount: updatedVideo.commentsCount,
         });
     } catch (err: any) {
         console.error(err);
@@ -126,7 +126,7 @@ router.delete(
             // decrement the number of comments on a video
             const updatedVideo = await Video.findOneAndUpdate(
                 { videoKey: deletedCommentDocument!.videoKey },
-                { $inc: { commentsNumber: -1 } },
+                { $inc: { commentsCount: -1 } },
                 { new: true }
             );
 
@@ -134,7 +134,7 @@ router.delete(
             res.status(200).json({
                 success: true,
                 deletedCommentDocument,
-                newCommentsNumber: updatedVideo?.commentsNumber,
+                newCommentsCount: updatedVideo?.commentsCount,
             });
         } catch (err: any) {
             console.error(err);

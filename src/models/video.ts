@@ -22,7 +22,7 @@ const videoSchema = new Schema(
             type: [String],
             default: [],
         },
-        commentsNumber: {
+        commentsCount: {
             type: Number,
             default: 0,
         },

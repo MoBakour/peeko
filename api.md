@@ -19,6 +19,16 @@ UserObject = {
         trim: true,
         validationRegex: /^[a-zA-Z0-9_ ]+$/,
     },
+    email: {
+        type: String,
+        trim: true,
+        required: false
+    },
+    password: {
+        type: String,
+        trim: true,
+        required: false
+    }
     deviceId: {
         type: String,
         required: true,
@@ -76,7 +86,7 @@ VideoObject = {
         type: String[],
         default: []
     },
-    commentsNumber: {
+    commentsCount: {
         type: Number,
         default: 0
     },
@@ -133,11 +143,11 @@ CommentObject = {
 };
 ```
 
-## User Endpoints
+## Mobile User Endpoints
 
-#### - [POST] /user/createAccount
+#### - [POST] /mobile/user/signup
 
-This route creates a new user profile/account.
+This route creates a new user profile/account on mobile client only.
 
 With the request body there must be attached a deviceId to identify the device that was used to create the account. And a username for the user profile. The username must be unique accross the application and must pass a few validation requirements mentioned below.
 
@@ -188,15 +198,15 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [GET] /user/hasAccount<span style="color:darkred">?deviceId=<span style="color:red">{{ deviceId key }}</span></span>
+#### - [GET] /mobile/user/hasAccount/<span style="color:red">{{ deviceId }}</span>
 
 This route checks if a user with the given deviceId exists in the database.
 
-Replace {{ deviceId key }} with the stored user deviceId key.
+Replace {{ deviceId }} with the stored user deviceId key.
 
 If an account was found associated with the given deviceId, a response with `hasAccount` set to true will be returned, as well as an `accounts` array with the user account objects that fall under the given deviceId, and finally `tokens` array of objects, each object containing `userId` property for the account id, and `token` property with the token of that account. Otherwise, if no account was found under the given deviceId, `hasAccount` will be set to false in the response object, and `accounts` & `tokens` will be an empty arrays.
 
-Expected **_Query Parameters_**:
+Expected **_URL Parameters_**
 
 -   `deviceId`: user account deviceId
 
@@ -220,6 +230,8 @@ Expected Response JSON Objects:
         error: String
     }
     ```
+
+## User Endpoints
 
 #### - [DELETE] /user/deleteAccount
 
@@ -251,7 +263,7 @@ Expected Response JSON Objects:
 
 This route pings the server to update the IP address of the current user.
 No params or request body is expected for this request, as it just pings the server. The server handles getting the IP address and updating it in the database.
-Being signed into the app with a user account and having the authorization token attached to the request headers is sufficient.
+Being signed into the app with a user account and having the authorization token attached to the request headers (mobile client) or the cookies (web client) is sufficient.
 
 Expected Response JSON Objects:
 
@@ -302,15 +314,15 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [GET] /video/streamVideo<span style="color:darkred">?videoKey=<span style="color:red">{{ video key }}</span></span>
+#### - [GET] /video/streamVideo/<span style="color:red">{{ videoKey }}</span>
 
 This route gets a video file from the server. (It gets the video itself only and not the video data).
 
 In this route, no json response is going to be sent from the server, but a video file will be streamed down to the client from the server.
 
-Expected **_Query Parameters_**:
+Expected **_URL Parameters_**
 
--   `videoKey`: the video key to identify the video targeted for download
+-   `videoKey`: the video key to identify the video targeted for streaming
 
 Expected **_Response_**:
 
@@ -325,13 +337,40 @@ Expected **_Response_**:
     }
     ```
 
+#### - [GET] /getVideo/<span style="color:red">{{ videoKey }}</span>
+
+This route gets a single video information. Video key should be supplied in the request URL parameters to identify the video to get.
+
+Expected **_URL Parameters_**
+
+-   `videoKey`: the video key to identify the video targeted for getting
+
+Expected Response JSON Objects:
+
+-   Success:
+
+    ```js
+    {
+        success: true,
+        videoDocument: VideoDocument
+    }
+    ```
+
+-   Failure:
+    ```js
+    {
+        success: false,
+        error: String
+    }
+    ```
+
 #### - [POST] /video/getVideos
 
-This route gets an array of video keys. Keys are selected randomly and previously viewed videos are excluded from the selection.
+This route gets an array of video documents. Video documents are selected randomly and previously viewed videos are excluded from the selection.
 
-The number of video keys returned is decided by the `count` option passed in the request body, and if not passed, it defaults to 10.
+The number of video documents returned is decided by the `count` option passed in the request body, and if not passed, it defaults to 10.
 
-Another option that can be passed in the request body is the `viewed` option, which is an array that contains keys to be excluded in the selection process. Previously watched videos by the client should be included in the viewed array for next requests so that the user does not view the same videos over and over again.
+Another option that can be passed in the request body is the `viewed` option, which is an array that contains keys to be excluded in the selection process. Previously watched videos by the client should be included in the viewed array for next requests so that the user does not get the same videos over and over again.
 
 Expected **_JSON Request Body_**:
 
@@ -345,7 +384,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        videos: String[] // an array of video keys
+        videoDocuments: VideoDocument[] // an array of video documents
     }
     ```
 
@@ -357,15 +396,15 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [DELETE] /video/deleteVideo<span style="color:darkred">?videoKey=<span style="color:red">{{ video key }}</span></span>
+#### - [DELETE] /video/deleteVideo/<span style="color:red">{{ videoKey }}</span>
 
 This route deletes a video with the provided key.
 
 A delete operation will be attempted on the video. If the operation succeeds, a video document will be sent with the response, otherwise, a failure response will be sent.
 
-Expected **_Query Parameters_**:
+Expected **_URL Parameters_**
 
--   `videoKey`: the video key to the video data to target for delete action
+-   `videoKey`: the video key of the video targeted for delete operation
 
 Expected Response JSON Objects:
 
@@ -388,7 +427,7 @@ Expected Response JSON Objects:
 
 ## Comment Endpoints
 
-#### - [GET] /comment/getComments<span style="color:darkred">?videoKey=<span style="color:red">{{ video key }}</span></span>
+#### - [GET] /comment/getComments/<span style="color:red">{{ videoKey }}</span>
 
 This route gets all the comments of a specific video post.
 
@@ -405,7 +444,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        comments: CommentObject[] // an array of comment objects
+        commentDocuments: CommentDocument[] // an array of comment documents
     }
     ```
 
@@ -435,8 +474,8 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        commentDocument: CommentObject, // the posted comment object
-        newCommentsNumber: Number // the new up-to-date number of comments after the new comment
+        commentDocument: CommentDocument, // the posted comment object
+        newCommentsCount: Number // the new up-to-date number of comments after the new comment
     }
     ```
 
@@ -448,7 +487,7 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [DELETE] /comment/deleteComment<span style="color:darkred">?commentId=<span style="color:red">{{ comment id }}</span></span>
+#### - [DELETE] /comment/deleteComment/<span style="color:red">{{ commentId }}</span>
 
 This route is to delete a comment from a video.
 
@@ -465,8 +504,8 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        deletedCommentDocument: CommentObject, // the deleted comment object
-        newCommentsNumber: Number // the new up-to-date number of comments after the deleted comment
+        deletedCommentDocument: CommentDocument, // the deleted comment object
+        newCommentsCount: Number // the new up-to-date number of comments after the deleted comment
     }
     ```
 

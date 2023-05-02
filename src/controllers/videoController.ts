@@ -86,11 +86,11 @@ router.get(
     async (req: PeekoRequest, res) => {
         try {
             // get video from db
-            const videoData = req.resource as VideoType;
+            const videoDocument = req.resource as VideoType;
 
             res.status(200).json({
                 success: true,
-                videoData,
+                videoDocument,
             });
         } catch (err: any) {
             console.error(err);
@@ -123,7 +123,7 @@ router.post("/getVideos", requireLogin, async (req, res) => {
          * Use MongoDB $group aggregation stage to make sure
          * we don't get duplicate documents.
          */
-        const videos: VideoType[] = await Video.aggregate([
+        const videoDocuments: VideoType[] = await Video.aggregate([
             { $match: { videoKey: { $nin: viewed } } },
             { $sample: { size: count } },
             { $group: { _id: "$_id", doc: { $first: "$$ROOT" } } },
@@ -133,7 +133,7 @@ router.post("/getVideos", requireLogin, async (req, res) => {
         // return result
         return res.status(200).json({
             success: true,
-            videos,
+            videoDocuments,
         });
     } catch (err: any) {
         console.error(err);
