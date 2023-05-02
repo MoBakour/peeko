@@ -126,8 +126,6 @@
 
 -   [x] Rename response object fields to follow conventions
 
--   [x] Change response object field names to follow unified convention
-
 -   [x] Deploy backend app version 0.1.0-test.5
 
 ## TODO

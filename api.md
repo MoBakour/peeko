@@ -22,13 +22,13 @@ UserObject = {
     email: {
         type: String,
         trim: true,
-        required: false
+        required: false,
     },
     password: {
         type: String,
         trim: true,
-        required: false
-    }
+        required: false,
+    },
     deviceId: {
         type: String,
         required: true,
