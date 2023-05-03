@@ -76,3 +76,13 @@ export const validateUser_web = (userObject: UserObjectType) => {
 
     return error;
 };
+
+export const validateComment = (comment: string) => {
+    let error: string = "";
+
+    if (comment.length > 300) {
+        error = "Comment maximum length is 300 characters";
+    }
+
+    return error;
+};

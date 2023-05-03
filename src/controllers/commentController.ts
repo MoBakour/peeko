@@ -4,6 +4,7 @@ import { UserType, CommentType, PeekoRequest } from "../types";
 import Comment from "../models/comment";
 import Video from "../models/video";
 import { requireLogin } from "../middleware/authentication";
+import { validateComment } from "../middleware/validation";
 
 // express router
 const router = express.Router();
@@ -44,6 +45,15 @@ router.post("/postComment", requireLogin, async (req: PeekoRequest, res) => {
     const userObject = req.currentUser as UserType;
 
     try {
+        // validate comment string
+        const error = validateComment(comment);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                error,
+            });
+        }
+
         // create comment structure
         const commentObject = {
             commentorId: userObject._id,

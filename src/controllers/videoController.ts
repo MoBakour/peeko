@@ -1,7 +1,6 @@
 // imports
-import fs from "fs";
 import express from "express";
-import upload from "../models/multerSetup";
+import { upload, validateFile, deleteFile } from "../models/multerSetup";
 import { s3_download, s3_upload, s3_delete } from "../models/s3";
 import { MulterFileType, VideoType, PeekoRequest } from "../types";
 import Video from "../models/video";
@@ -17,8 +16,9 @@ const router = express.Router();
  */
 router.post(
     "/uploadVideo",
-    upload.single("videoFile"),
     requireLogin,
+    upload.single("videoFile"),
+    validateFile,
     async (req: PeekoRequest, res) => {
         // destructure
         const uploaderId: string = req.currentUser!._id;
@@ -28,7 +28,7 @@ router.post(
         try {
             // upload file to s3
             const s3_result = await s3_upload(videoFile);
-            await fs.promises.unlink(videoFile.path);
+            await deleteFile(videoFile!.path);
 
             // create video object structure
             const videoObject = {

@@ -31,15 +31,11 @@ router.post("/signup", async (req, res) => {
         // get user ip address
         const ipAddress = requestIp.getClientIp(req) || undefined;
 
-        // hash password
-        const salt = await bcrypt.genSalt();
-        const hashedPassword = await bcrypt.hash(password, salt);
-
         // build user object structure
         const userObject: UserObjectType = {
             username,
             email,
-            password: hashedPassword,
+            password,
             deviceInfo: {
                 ipAddress,
             },
@@ -53,6 +49,11 @@ router.post("/signup", async (req, res) => {
                 error,
             });
         }
+
+        // hash password
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+        userObject.password = hashedPassword;
 
         // insert to db
         const userDocument: UserType = await User.create(userObject);

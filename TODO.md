@@ -128,7 +128,17 @@
 
 -   [x] Deploy backend app version 0.1.0-test.5
 
+## May 3, 2023
+
+-   [x] Build validation middleware to validate video duration, file type, and file size
+
+-   [x] Fixed bugs
+
+-   [x] Deploy backend app version 0.1.0-test.6
+
 ## TODO
+
+-   [ ] Fix todo, changelog, history, and versioning
 
 -   [ ] Make a max number of accounts per deviceId
 

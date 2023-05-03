@@ -15,7 +15,6 @@ const commentSchema = new Schema(
         comment: {
             type: String,
             required: true,
-            maxLength: [300, "Comment max length is 300 characters"],
             trim: true,
         },
         videoKey: {

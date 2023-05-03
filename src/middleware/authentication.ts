@@ -91,14 +91,6 @@ export const requireLogin = (
 ) => {
     if (req.currentUser) next();
     else {
-        if (req.path === "/video/uploadVideo") {
-            fs.unlink(req.file!.path, (err) => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-        }
-
         res.status(400).json({
             success: false,
             error: "Unauthorized Action",
