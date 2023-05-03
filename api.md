@@ -231,6 +231,20 @@ Expected Response JSON Objects:
     }
     ```
 
+## Web User Endpoints
+
+#### - [POST] /web/user/signup
+
+    (no details)
+
+#### - [POST] /web/user/login
+
+    (no details)
+
+#### - [POST] /web/user/logout
+
+    (no details)
+
 ## User Endpoints
 
 #### - [DELETE] /user/deleteAccount
@@ -294,6 +308,8 @@ This route uploads a video to the server, the response object contains the video
 Expected **_JSON Request Body_**:
 
 -   `videoFile` (File) the posted video file
+    -   Max video file size is 300 megabytes
+    -   Max video duration is 5 minutes
 
 Expected Response JSON Objects:
 
@@ -464,8 +480,9 @@ If the video was found with the provided video key, a comment will be attached t
 
 Expected **_JSON Request Body_**:
 
--   `comment` (string) the comment content
 -   `videoKey` (string) the key to the video to attach the comment
+-   `comment` (string) the comment content
+    -   comment max length of 300 characters
 
 Expected Response JSON Objects:
 

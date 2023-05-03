@@ -38,14 +38,15 @@ const validateFile = async (
 
     try {
         // validate size
-        const { size: fileSize } = await fs.promises.stat(filePath);
+        let { size: fileSize } = await fs.promises.stat(filePath);
+        fileSize /= 1024 ** 2; // convert from bytes to mb
 
-        if (fileSize > 5 * 1024 * 1024) {
+        if (fileSize > 300) {
             await deleteFile(filePath);
 
             return res.status(400).json({
                 success: false,
-                error: "Maximum video file size is 5MB",
+                error: "Maximum video file size is 300 MB",
             });
         }
 
