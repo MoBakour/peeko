@@ -1,6 +1,8 @@
 // imports
 import express from "express";
-import { upload, validateFile, deleteFile } from "../models/multerSetup";
+import { MulterError } from "multer";
+import { getVideoDurationInSeconds } from "get-video-duration";
+import { upload, deleteFile } from "../models/multerSetup";
 import { s3_download, s3_upload, s3_delete } from "../models/s3";
 import { MulterFileType, VideoType, PeekoRequest } from "../types";
 import Video from "../models/video";
@@ -14,21 +16,48 @@ const router = express.Router();
  * @post
  *      POST request to upload a video to s3 and db
  */
-router.post(
-    "/uploadVideo",
-    requireLogin,
-    upload.single("videoFile"),
-    validateFile,
-    async (req: PeekoRequest, res) => {
+router.post("/uploadVideo", requireLogin, async (req: PeekoRequest, res) => {
+    upload(req, res, async (err) => {
+        if (err instanceof MulterError && err.code === "LIMIT_FILE_SIZE") {
+            return res.status(400).json({
+                suucess: false,
+                error: "Video file size must not exceed 100 MB",
+            });
+        } else if (err) {
+            return res.status(400).json({
+                success: false,
+                error: err.message,
+            });
+        }
+
+        // if no errors
+        // validate file existence
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: "Video file not found",
+            });
+        }
+
         // destructure
-        const uploaderId: string = req.currentUser!._id;
-        const uploaderUsername: string = req.currentUser!.username;
-        const videoFile: MulterFileType = req.file!;
+        const uploaderId = req.currentUser!._id;
+        const uploaderUsername = req.currentUser!.username;
+        const videoFile: MulterFileType = req.file;
 
         try {
-            // upload file to s3
+            // validate video file duration
+            const duration = await getVideoDurationInSeconds(videoFile.path);
+            if (duration > 300) {
+                await deleteFile(videoFile.path);
+                return res.status(400).json({
+                    success: false,
+                    error: "Video duration must not exceed 5 minutes",
+                });
+            }
+
+            // upload to S3
             const s3_result = await s3_upload(videoFile);
-            await deleteFile(videoFile!.path);
+            await deleteFile(videoFile.path);
 
             // create video object structure
             const videoObject = {
@@ -40,19 +69,20 @@ router.post(
             // upload video data to db
             const videoDocument: VideoType = await Video.create(videoObject);
 
+            // return result to client
             res.status(200).json({
                 success: true,
                 videoDocument,
             });
         } catch (err: any) {
             console.error(err);
-            res.status(400).json({
+            return res.status(400).json({
                 success: false,
                 error: err.message,
             });
         }
-    }
-);
+    });
+});
 
 /**
  * @get

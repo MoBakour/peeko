@@ -1,86 +1,26 @@
-// import multer
-import multer from "multer";
+// imports
 import fs from "fs";
-import { getVideoDurationInSeconds } from "get-video-duration";
-import { PeekoRequest } from "../types";
-import { Response, NextFunction } from "express";
+import multer from "multer";
 
-// create multer instance
-const upload = multer({
+// set multer upload
+export const upload = multer({
     dest: "./uploads",
-});
-
-// handle file validation
-const validateFile = async (
-    req: PeekoRequest,
-    res: Response,
-    next: NextFunction
-) => {
-    // if file not found
-    if (!req.file) {
-        return res.status(400).json({
-            success: false,
-            error: "File not found",
-        });
-    }
-
-    const filePath = req.file.path;
-
-    // if file is not video
-    if (!req.file.mimetype.startsWith("video/")) {
-        await deleteFile(filePath);
-
-        return res.status(400).json({
-            success: false,
-            error: "File must be a video",
-        });
-    }
-
-    try {
-        // validate size
-        let { size: fileSize } = await fs.promises.stat(filePath);
-        fileSize /= 1024 ** 2; // convert from bytes to mb
-
-        if (fileSize > 300) {
-            await deleteFile(filePath);
-
-            return res.status(400).json({
-                success: false,
-                error: "Maximum video file size is 300 MB",
-            });
+    limits: {
+        fileSize: 100 * 1024 * 1024,
+    },
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith("video/")) {
+            return cb(new Error("Only video files are accepted"));
         }
+        cb(null, true);
+    },
+}).single("videoFile");
 
-        // validate duration
-        const duration = await getVideoDurationInSeconds(filePath);
-
-        if (duration > 300) {
-            await deleteFile(filePath);
-
-            return res.status(400).json({
-                success: false,
-                error: "Video duration must not exceed 5 minutes",
-            });
-        }
-
-        next();
-    } catch (err: any) {
-        await deleteFile(filePath);
-
-        return res.status(400).json({
-            success: false,
-            error: err.message,
-        });
-    }
-};
-
-// delete video from fs
-const deleteFile = async (filePath: string) => {
+// delete file function
+export const deleteFile = async (filePath: string) => {
     try {
         await fs.promises.unlink(filePath);
     } catch (err: any) {
-        throw err;
+        console.error(err);
     }
 };
-
-// exoprts
-export { upload, validateFile, deleteFile };
