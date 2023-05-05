@@ -9,9 +9,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 // import routes
-import userController from "./controllers/mobileUserController";
-import mobileUserController from "./controllers/mobileUserController";
-import webUserController from "./controllers/webUserController";
+import userController from "./controllers/userController";
 import videoController from "./controllers/videoController";
 import commentController from "./controllers/commentController";
 import feedbackController from "./controllers/feedbackController";
@@ -31,7 +29,7 @@ const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
 const SERVER_PORT_STRING = process.env.port || process.env.PORT || "3000";
 const SERVER_PORT = parseInt(SERVER_PORT_STRING);
 
-const API_VERSION = "v0.1.0-test.6";
+const API_VERSION = "v0.1.0-test.7";
 
 // connect to db
 mongoose
@@ -51,8 +49,6 @@ app.use(authenticateUser);
 
 // use routes
 app.use("/user", userController);
-app.use("/mobile/user", mobileUserController);
-app.use("/web/user", webUserController);
 app.use("/video", videoController);
 app.use("/comment", commentController);
 app.use("/feedback", feedbackController);

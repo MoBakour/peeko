@@ -90,7 +90,7 @@ router.post("/uploadVideo", requireLogin, async (req: PeekoRequest, res) => {
  */
 router.get("/streamVideo/:videoKey", checkVideoExists, async (req, res) => {
     // destructure
-    const videoKey = req.params.videoKey as string;
+    const { videoKey } = req.params;
 
     try {
         // get video from s3
@@ -111,7 +111,6 @@ router.get("/streamVideo/:videoKey", checkVideoExists, async (req, res) => {
  */
 router.get(
     "/getVideo/:videoKey",
-    requireLogin,
     checkVideoExists,
     async (req: PeekoRequest, res) => {
         try {
@@ -140,7 +139,7 @@ router.get(
 router.post("/getVideos", requireLogin, async (req, res) => {
     // destructure
     const count = parseInt(req.body.count as string) || 10;
-    const viewed: string[] = req.body.viewed;
+    const viewed: string[] = req.body.viewed || [];
 
     try {
         /**
@@ -180,8 +179,8 @@ router.post("/getVideos", requireLogin, async (req, res) => {
  */
 router.delete(
     "/deleteVideo/:videoKey",
-    checkVideoExists,
     requireLogin,
+    checkVideoExists,
     async (req: PeekoRequest, res) => {
         // destructure
         const videoDocument = req.resource as VideoType;

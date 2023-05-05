@@ -4,7 +4,7 @@ import { UserType, CommentType, PeekoRequest } from "../types";
 import Comment from "../models/comment";
 import Video from "../models/video";
 import { requireLogin } from "../middleware/authentication";
-import { validateComment } from "../middleware/validation";
+import { validateComment } from "../utils/validation";
 
 // express router
 const router = express.Router();

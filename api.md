@@ -23,16 +23,15 @@ UserObject = {
         type: String,
         trim: true,
         required: false,
+        maxLength: 320,
+        validationRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     },
     password: {
         type: String,
         trim: true,
         required: false,
-    },
-    deviceId: {
-        type: String,
-        required: true,
-        trim: true,
+        minLength: 6,
+        maxLength: 300,
     },
     deviceInfo: {
         fingerprint: String,
@@ -143,40 +142,33 @@ CommentObject = {
 };
 ```
 
-## Mobile User Endpoints
+## User Endpoints
 
-#### - [POST] /mobile/user/signup
+#### - [POST] /user/signup
 
-This route creates a new user profile/account on mobile client only.
+This route requests creating a new user account.
 
-With the request body there must be attached a deviceId to identify the device that was used to create the account. And a username for the user profile. The username must be unique accross the application and must pass a few validation requirements mentioned below.
+A response with the userDocument and the token will be returned, the token should be stored on the client side. If the client was a web app, store the token in the cookies. If the client was a mobile app, store the token in the appropriate method and location, away, secured, and hidden from the user or any other third-party accessors.
 
-About the deviceId. An account is associated with the device, so if a user creates an account for the first time, it is to be attached and related to the client device for ever, and the deviceId is a way to detect the relationship. If the app was uninstalled and then re-installed again, the deviceId is used to detect the account. The only way to cut the relation between the account and the device is by deleting the account.
-
-Note that a single device can hold multiple accounts, but a single account cannot be used on multiple devices.
-
-About the token. When an account is created, a token is sent back from the server. This token must be stored in the client side, and on every action request, it should be attached to the request headers under the `Authorization` header in the following format: `Bearer {{ token }}`. This token will help identify the user and make sure he is authorized for the action.
+After the account is created it needs to be activated with an activation code sent to the user email that was used for registration. No feature or route will be accessible by any unactivated account. Activation details will be discussed in /user/activateAccount endopint documentation section.
 
 Expected **_JSON Request Body_**:
 
--   `deviceId` (string) the client device identification string
--   `username` (string) a username
-    -   username max length of 24 characters
-    -   username should only include letters, numbers, underscores, and spaces are allowed
-    -   username must be unique
--   `deviceInfo` (object) has the following schema (not required, not all `deviceInfo` fields required):
-    ```js
-    {
-        fingerprint: String,
-        brand: String,
-        model: String,
-        osVersion: String,
-        abi: {
-            abiArc: String,
-            supportedAbis: String,
-        },
-    }
-    ```
+-   `username` (string) a new username of the account, will be visible by other users.
+    -   Must be unique across the app
+    -   Maximum length is 24 characters
+    -   Must not start or end with a space character
+    -   Must only include letters, numbers, underscores, and spaces
+-   `email` (string) the email address of the user
+    -   Must be unique across the app
+    -   Maximum length is 320 characters
+-   `password` (string) a new user account password
+    -   Minimum length is 6 characters
+    -   Maximum length is 300 characters
+    -   Must not start or end with a space character
+-   `client` (string) the client that the user is using
+    -   Must be one of two: "web" or "mobile"
+    -   Case insensitive
 
 Expected Response JSON Objects:
 
@@ -185,8 +177,17 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        userDocument: UserObject, // a user object that contains user information
-        token: String // a token to be stored in the client side
+        userDocument: UserDocument, // an object with the video information
+    }
+    ```
+
+-   Success (mobile):
+
+    ```js
+    {
+        success: true,
+        userDocument: UserDocument, // an object with the video information
+        token: string // (only for mobile) an authorization token to be stored at the mobile client
     }
     ```
 
@@ -198,17 +199,17 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [GET] /mobile/user/hasAccount/<span style="color:red">{{ deviceId }}</span>
+#### - [POST] /user/login
 
-This route checks if a user with the given deviceId exists in the database.
+This route requests login token to be returned for mobile clients to store it, or stored in cookies for web clients.
 
-Replace {{ deviceId }} with the stored user deviceId key.
+Expected **_JSON Request Body_**:
 
-If an account was found associated with the given deviceId, a response with `hasAccount` set to true will be returned, as well as an `accounts` array with the user account objects that fall under the given deviceId, and finally `tokens` array of objects, each object containing `userId` property for the account id, and `token` property with the token of that account. Otherwise, if no account was found under the given deviceId, `hasAccount` will be set to false in the response object, and `accounts` & `tokens` will be an empty arrays.
-
-Expected **_URL Parameters_**
-
--   `deviceId`: user account deviceId
+-   `credential` (string) the username or email of the user account
+-   `password` (string) the password of the user account
+-   `client` (string) the client that the user is using
+    -   Must be one of two: "web" or "mobile"
+    -   Case insensitive
 
 Expected Response JSON Objects:
 
@@ -217,9 +218,17 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        hasAccount: Boolean, // specifies whether the deviceId has accounts associated with it
-        accounts: UserObject[], // an array of accounts associated with the deviceId
-        tokens: TokenObject[] // an array of token objects of the following format: { userId: string, token: string }
+        userDocument: UserDocument, // an object with the video information
+    }
+    ```
+
+-   Success (mobile):
+
+    ```js
+    {
+        success: true,
+        userDocument: UserDocument, // an object with the video information
+        token: string // (only for mobile) an authorization token to be stored at the mobile client
     }
     ```
 
@@ -231,21 +240,72 @@ Expected Response JSON Objects:
     }
     ```
 
-## Web User Endpoints
+#### - [POST] /user/logout
 
-#### - [POST] /web/user/signup
+A route requests logout of the user account. This route is only for web clients, where the server handles removing the token from the user cookies. Mobile clients should handle logout operation on the client-side, where they delete the token from storage.
 
-    (no details)
+Expected **_JSON Request Body_**:
 
-#### - [POST] /web/user/login
+-   `client` (string) the client that the user is using
+    -   Must be one of two: "web" or "mobile"
+    -   Case insensitive
 
-    (no details)
+Expected Response JSON Objects:
 
-#### - [POST] /web/user/logout
+-   Success:
 
-    (no details)
+    ```js
+    {
+        success: true;
+    }
+    ```
 
-## User Endpoints
+-   Failure:
+    ```js
+    {
+        success: false,
+        error: String
+    }
+    ```
+
+#### - [PUT] /user/activateAccount
+
+This route requests the activation of a new unactivated account.
+
+When a new account is created with /user/signup. It is set to be unactivated. Activation code will be sent ot the user email. Activation should be done within 10 minutes after the signup operation. If the user fails to activate the account in 10 minutes, it will be deleted. The user is given a maximum of 5 activation attempts. If all attempts were used unsuccessfully, then the account will be blocked from activation for 24 hours, and the username and email address of the account will be blocked from signup for 24 hours as well.
+
+Expected **_JSON Request Body_**:
+
+-   `activationCode` (string) the account activation code, sent to user's email
+
+Expected Response JSON Objects:
+
+-   Success:
+
+    ```js
+    {
+        success: true,
+    }
+    ```
+
+-   Failure (Invalid Code):
+
+    ```js
+    {
+        success: false,
+        error: String,
+        attemptsLeft: Number
+    }
+    ```
+
+-   Failure:
+
+    ```js
+    {
+        success: false,
+        error: String
+    }
+    ```
 
 #### - [DELETE] /user/deleteAccount
 
@@ -260,7 +320,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        deletedUserDocument: UserObject // the deleted user object
+        deletedUserDocument: UserDocument // the deleted user document
     }
     ```
 
@@ -308,7 +368,8 @@ This route uploads a video to the server, the response object contains the video
 Expected **_JSON Request Body_**:
 
 -   `videoFile` (File) the posted video file
-    -   Max video file size is 300 megabytes
+    -   File must be of video mimetype
+    -   Max video file size is 100 megabytes
     -   Max video duration is 5 minutes
 
 Expected Response JSON Objects:
@@ -318,7 +379,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        videoDocument: VideoObject // an object with the video information
+        videoDocument: VideoDocument // an object with the video information
     }
     ```
 
@@ -391,7 +452,7 @@ Another option that can be passed in the request body is the `viewed` option, wh
 Expected **_JSON Request Body_**:
 
 -   `count` (integer) (optional, default is 10)
--   `viewed` (string[]) an array of strings, each string is the key of a previously viewed video
+-   `viewed` (string[]) (optional, default is []) an array of strings, each string is the key of a previously viewed video
 
 Expected Response JSON Objects:
 

@@ -2,7 +2,8 @@
 import express from "express";
 import Video from "../models/video";
 import { requireLogin } from "../middleware/authentication";
-import { PeekoRequest } from "../types";
+import { PeekoRequest, VideoType } from "../types";
+import { checkVideoExists } from "../middleware/checkResourceExists";
 
 // express router
 const router = express.Router();
@@ -11,49 +12,44 @@ const router = express.Router();
  * @put
  *      PUT request to toggle like on a video post
  */
-router.put("/toggleLike", requireLogin, async (req: PeekoRequest, res) => {
-    // destructure
-    const { videoKey } = req.body;
-    const userId = req.currentUser!._id;
+router.put(
+    "/toggleLike",
+    requireLogin,
+    checkVideoExists,
+    async (req: PeekoRequest, res) => {
+        // destructure
+        const userId = req.currentUser!._id;
+        const videoDocument = req.resource! as VideoType;
 
-    try {
-        const videoDocument = await Video.findOne({ videoKey });
+        try {
+            // decide which operation to perform (like/unlike)
+            const alreadyLiked = videoDocument.likes.includes(userId);
+            const updateOperation = alreadyLiked
+                ? { $pull: { likes: userId } }
+                : { $addToSet: { likes: userId } };
 
-        // if video not found
-        if (!videoDocument) {
-            return res.status(400).json({
+            // perform operation
+            const updatedDocument = await Video.findOneAndUpdate(
+                { videoKey: videoDocument.videoKey },
+                updateOperation,
+                { new: true }
+            );
+
+            // send back response
+            res.status(200).json({
+                success: true,
+                likesCount: updatedDocument?.likes.length,
+                operation: alreadyLiked ? "UNLIKE" : "LIKE",
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(200).json({
                 success: false,
-                error: "Video not found",
+                error: err.message,
             });
         }
-
-        // decide which operation to perform (like/unlike)
-        const alreadyLiked = videoDocument.likes.includes(userId);
-        const updateOperation = alreadyLiked
-            ? { $pull: { likes: userId } }
-            : { $addToSet: { likes: userId } };
-
-        // perform operation
-        const updatedDocument = await Video.findOneAndUpdate(
-            { videoKey },
-            updateOperation,
-            { new: true }
-        );
-
-        // send back response
-        res.status(200).json({
-            success: true,
-            likesCount: updatedDocument?.likes.length,
-            operation: alreadyLiked ? "UNLIKE" : "LIKE",
-        });
-    } catch (err: any) {
-        console.error(err);
-        res.status(200).json({
-            success: false,
-            error: err.message,
-        });
     }
-});
+);
 
 /**
  * @put

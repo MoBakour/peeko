@@ -1,48 +1,36 @@
+// imports
 import { UserObjectType } from "../types";
 
+// validation regexes
 const usernameRegex = /^[a-zA-Z0-9_ ]+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const validateUsername = (username: string) => {
+// validate user function
+export const validateUser = (userObject: UserObjectType) => {
     let error: string = "";
 
-    if (!username) {
+    // vaildate username
+    if (!userObject.username) {
         error = "Username is required";
     } else {
-        if (username.length > 24) {
+        if (userObject.username.length > 24) {
             error = "Username maximum length is 24 characters";
         }
 
-        if (username.startsWith(" ") || username.endsWith(" ")) {
+        if (
+            userObject.username.startsWith(" ") ||
+            userObject.username.endsWith(" ")
+        ) {
             error = "Username cannot start or end with spaces";
         }
 
-        if (!usernameRegex.test(username)) {
+        if (!usernameRegex.test(userObject.username)) {
             error =
                 "Username can only include letters, numbers, underscores, and spaces";
         }
     }
 
-    return error;
-};
-
-export const validateUser_app = (userObject: UserObjectType) => {
-    let error: string = "";
-
-    error = validateUsername(userObject.username);
-
-    if (!userObject.deviceId) {
-        error = "deviceId is required for mobile app registration";
-    }
-
-    return error;
-};
-
-export const validateUser_web = (userObject: UserObjectType) => {
-    let error: string = "";
-
-    error = validateUsername(userObject.username);
-
+    // validate email
     if (!userObject.email) {
         error = "Please enter your email";
     } else {
@@ -55,6 +43,7 @@ export const validateUser_web = (userObject: UserObjectType) => {
         }
     }
 
+    // validate password
     if (!userObject.password) {
         error = "Please enter a password";
     } else {
@@ -77,6 +66,7 @@ export const validateUser_web = (userObject: UserObjectType) => {
     return error;
 };
 
+// validate comment function
 export const validateComment = (comment: string) => {
     let error: string = "";
 

@@ -5,18 +5,26 @@ import { Request } from "express";
 // MulterFile type
 export type MulterFileType = Express.Multer.File;
 
+// Client Types
+export type ClientType = "web" | "mobile";
+
 // Request with resource type
 export interface PeekoRequest extends Request {
     resource?: UserType | CommentType | VideoType;
     currentUser?: UserType | null;
 }
 
+// timestamps
+interface MongoTimestamps {
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 // User Object Type
 export interface UserObjectType {
     username: string;
-    email?: string;
+    email: string;
     password?: string;
-    deviceId?: string;
     deviceInfo?: {
         fingerprint?: string;
         brand?: string;
@@ -28,13 +36,19 @@ export interface UserObjectType {
             supportedAbis?: string;
         };
     };
+    activation?: {
+        activated: boolean;
+        activationCode: string;
+        attemptsLeft: number;
+        blocked: boolean;
+    };
 }
 
 // User type
-export interface UserType extends UserObjectType, Document {}
+export interface UserType extends UserObjectType, Document, MongoTimestamps {}
 
 // Comment type
-export interface CommentType extends Document {
+export interface CommentType extends Document, MongoTimestamps {
     commentorId: string;
     commentorUsername: string;
     comment: string;
@@ -42,7 +56,7 @@ export interface CommentType extends Document {
 }
 
 // Video type
-export interface VideoType extends Document {
+export interface VideoType extends Document, MongoTimestamps {
     uploaderId: string;
     uploaderUsername: string;
     videoKey: string;

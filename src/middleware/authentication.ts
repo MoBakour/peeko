@@ -82,18 +82,25 @@ export const authenticateUser = async (
 };
 
 /**
- * This function only allows access for those who are logged in the app
+ * This function only allows access for those who are logged in with activated accounts
  */
 export const requireLogin = (
     req: PeekoRequest,
     res: Response,
     next: NextFunction
 ) => {
-    if (req.currentUser) next();
-    else {
-        res.status(400).json({
-            success: false,
-            error: "Unauthorized Action",
-        });
+    let errorMessage: string = "";
+
+    if (req.currentUser && req.currentUser.activation!.activated) {
+        return next();
+    } else if (req.currentUser) {
+        errorMessage = "Account Activation Required";
+    } else {
+        errorMessage = "Login required for this action";
     }
+
+    res.status(400).json({
+        success: false,
+        error: errorMessage,
+    });
 };
