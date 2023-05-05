@@ -163,6 +163,13 @@ All changes applied on this project code base will be documented in this file.
     - Merged some util files under one file in ./utils/utils.ts
     - Small patches around the code base
 
+## [0.1.1-test.7] - 2023-05-06
+
+### Changed
+
+    - Changed env variables names
+    - Fixed activation subdocument in user model having an _id field
+
 ## TODOS
 
     - [ ] Check unnecessary mongodb user collection calls due to req.currentUser object

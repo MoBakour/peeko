@@ -31,24 +31,23 @@ const userSchema = new Schema(
             },
         },
         activation: {
-            type: {
-                activated: {
-                    type: Boolean,
-                    required: true,
-                },
-                activationCode: {
-                    type: String,
-                    trim: true,
-                    required: true,
-                },
-                attemptsLeft: {
-                    type: Number,
-                    required: true,
-                },
-                blocked: {
-                    type: Boolean,
-                    required: true,
-                },
+            _id: false,
+            activated: {
+                type: Boolean,
+                required: true,
+            },
+            activationCode: {
+                type: String,
+                trim: true,
+                required: true,
+            },
+            attemptsLeft: {
+                type: Number,
+                required: true,
+            },
+            blocked: {
+                type: Boolean,
+                required: true,
             },
         },
     },
