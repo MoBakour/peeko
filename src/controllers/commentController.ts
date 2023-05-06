@@ -3,7 +3,7 @@ import express from "express";
 import { UserType, CommentType, PeekoRequest } from "../types";
 import Comment from "../models/comment";
 import Video from "../models/video";
-import { requireLogin } from "../middleware/authentication";
+import { requireAuth } from "../middleware/authentication";
 import { validateComment } from "../utils/validation";
 
 // express router
@@ -13,7 +13,7 @@ const router = express.Router();
  * @get
  *      GET request to get comments of a specific video through provided video id
  */
-router.get("/getComments/:videoKey", requireLogin, async (req, res) => {
+router.get("/getComments/:videoKey", requireAuth, async (req, res) => {
     // destructure
     const { videoKey } = req.params;
 
@@ -39,7 +39,7 @@ router.get("/getComments/:videoKey", requireLogin, async (req, res) => {
  * @post
  *      POST request to post comment on a video through a provided video id
  */
-router.post("/postComment", requireLogin, async (req: PeekoRequest, res) => {
+router.post("/postComment", requireAuth, async (req: PeekoRequest, res) => {
     // destructure
     const { videoKey, comment } = req.body;
     const userObject = req.currentUser as UserType;
@@ -104,7 +104,7 @@ router.post("/postComment", requireLogin, async (req: PeekoRequest, res) => {
  */
 router.delete(
     "/deleteComment/:commentId",
-    requireLogin,
+    requireAuth,
     async (req: PeekoRequest, res) => {
         // destructure
         const { commentId } = req.params;

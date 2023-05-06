@@ -7,7 +7,7 @@ import { s3_download, s3_upload, s3_delete } from "../models/s3";
 import { MulterFileType, VideoType, PeekoRequest } from "../types";
 import Video from "../models/video";
 import { checkVideoExists } from "../middleware/checkResourceExists";
-import { requireLogin } from "../middleware/authentication";
+import { requireAuth } from "../middleware/authentication";
 
 // create router
 const router = express.Router();
@@ -16,7 +16,7 @@ const router = express.Router();
  * @post
  *      POST request to upload a video to s3 and db
  */
-router.post("/uploadVideo", requireLogin, async (req: PeekoRequest, res) => {
+router.post("/uploadVideo", requireAuth, async (req: PeekoRequest, res) => {
     upload(req, res, async (err) => {
         if (err instanceof MulterError && err.code === "LIMIT_FILE_SIZE") {
             return res.status(400).json({
@@ -136,7 +136,7 @@ router.get(
  *      POST request to get random video data from the database.
  *      It is a POST method because a body is needed to pass data.
  */
-router.post("/getVideos", requireLogin, async (req, res) => {
+router.post("/getVideos", requireAuth, async (req, res) => {
     // destructure
     const count = parseInt(req.body.count as string) || 10;
     const viewed: string[] = req.body.viewed || [];
@@ -179,7 +179,7 @@ router.post("/getVideos", requireLogin, async (req, res) => {
  */
 router.delete(
     "/deleteVideo/:videoKey",
-    requireLogin,
+    requireAuth,
     checkVideoExists,
     async (req: PeekoRequest, res) => {
         // destructure

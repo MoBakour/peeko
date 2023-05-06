@@ -144,13 +144,15 @@ CommentObject = {
 
 ## User Endpoints
 
-#### - [POST] /user/signup
+#### - [POST] /user/register
 
 This route requests creating a new user account.
 
 A response with the userDocument and the token will be returned, the token should be stored on the client side. If the client was a web app, store the token in the cookies. If the client was a mobile app, store the token in the appropriate method and location, away, secured, and hidden from the user or any other third-party accessors.
 
 After the account is created it needs to be activated with an activation code sent to the user email that was used for registration. No feature or route will be accessible by any unactivated account. Activation details will be discussed in /user/activateAccount endopint documentation section.
+
+With the request body, a special field (`devActivation`) can be passed with two sub-fields, `password` and `autoActivate`. This field can be used by developers only for development and testing purposes. A password is supplied to verify that the option is being used by a developer. The `autoActivation` field takes a boolean which specifies if an activation is required for this account or not. If the field was set to true, then no activation code will be required nor sent to the user email. But if the field was set to false, then the activation code will be required and sent to the user email, and also returned with the registration request under `activationCode` field for the developer.
 
 Expected **_JSON Request Body_**:
 
@@ -169,6 +171,26 @@ Expected **_JSON Request Body_**:
 -   `client` (string) the client that the user is using
     -   Must be one of two: "web" or "mobile"
     -   Case insensitive
+-   `deviceInfo` (object) an optional object that contains device information, all fields are optional and can be omitted. It follows the following schema:
+    ```js
+    {
+        fingerprint: String,
+        brand: String,
+        model: String,
+        osVersion: String,
+        abi: {
+            abiArc: String,
+            supportedAbis: String,
+        },
+    }
+    ```
+-   `devActivation` (object) an optional object (only for developers) It follows the following schema:
+    ```js
+    {
+        password: String,
+        autoActivate: Boolean
+    }
+    ```
 
 Expected Response JSON Objects:
 
@@ -177,7 +199,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        userDocument: UserDocument, // an object with the video information
+        userDocument: UserDocument, // an object with the user information
     }
     ```
 
@@ -186,8 +208,18 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        userDocument: UserDocument, // an object with the video information
+        userDocument: UserDocument, // an object with the user information
         token: string // (only for mobile) an authorization token to be stored at the mobile client
+    }
+    ```
+
+-   Success (dev autoActivate: false):
+
+    ```js
+    {
+        success: true,
+        userDocument: UserDocument, // an object with the user information
+        activationCode: String
     }
     ```
 
@@ -199,9 +231,10 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [POST] /user/login
+#### - [POST] /user/signIn
 
-This route requests login token to be returned for mobile clients to store it, or stored in cookies for web clients.
+This route requests a new token to be returned for mobile clients to store it, or stored in cookies for web clients.
+The token can be used to send authenticated requests to the API.
 
 Expected **_JSON Request Body_**:
 
@@ -218,7 +251,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        userDocument: UserDocument, // an object with the video information
+        userDocument: UserDocument, // an object with the user information
     }
     ```
 
@@ -227,7 +260,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        userDocument: UserDocument, // an object with the video information
+        userDocument: UserDocument, // an object with the user information
         token: string // (only for mobile) an authorization token to be stored at the mobile client
     }
     ```
@@ -240,9 +273,9 @@ Expected Response JSON Objects:
     }
     ```
 
-#### - [POST] /user/logout
+#### - [POST] /user/signOut
 
-A route requests logout of the user account. This route is only for web clients, where the server handles removing the token from the user cookies. Mobile clients should handle logout operation on the client-side, where they delete the token from storage.
+A route requests signing out of the user account. This route is only for web clients, where the server handles removing the token from the user cookies. Mobile clients should handle sign out operations on the client-side, where they delete the token from storage.
 
 Expected **_JSON Request Body_**:
 
@@ -272,7 +305,7 @@ Expected Response JSON Objects:
 
 This route requests the activation of a new unactivated account.
 
-When a new account is created with /user/signup. It is set to be unactivated. Activation code will be sent ot the user email. Activation should be done within 10 minutes after the signup operation. If the user fails to activate the account in 10 minutes, it will be deleted. The user is given a maximum of 5 activation attempts. If all attempts were used unsuccessfully, then the account will be blocked from activation for 24 hours, and the username and email address of the account will be blocked from signup for 24 hours as well.
+When a new account is created with /user/register. It is set to be unactivated. Activation code will be sent ot the user email. Activation should be done within 10 minutes after registering. If the user fails to activate the account in 10 minutes, it will be deleted. The user is given a maximum of 5 activation attempts. If all attempts were used unsuccessfully, then the account will be blocked from activation for 24 hours, and the username and email address of the account will be blocked from registering for 24 hours as well.
 
 Expected **_JSON Request Body_**:
 
@@ -337,7 +370,7 @@ Expected Response JSON Objects:
 
 This route pings the server to update the IP address of the current user.
 No params or request body is expected for this request, as it just pings the server. The server handles getting the IP address and updating it in the database.
-Being signed into the app with a user account and having the authorization token attached to the request headers (mobile client) or the cookies (web client) is sufficient.
+Being registered into the app with a user account and having the authorization token attached to the request headers (mobile client) or the cookies (web client) is sufficient.
 
 Expected Response JSON Objects:
 
@@ -429,7 +462,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        videoDocument: VideoDocument
+        videoDocument: VideoDocument // an object with the video information
     }
     ```
 
@@ -490,7 +523,7 @@ Expected Response JSON Objects:
     ```js
     {
         success: true,
-        deletedVideoDocument: VideoDocument // the video that was deleted
+        deletedVideoDocument: VideoDocument // the video document that was deleted
     }
     ```
 

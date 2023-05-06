@@ -120,7 +120,7 @@ All changes applied on this project code base will be documented in this file.
 ### Added
 
     - Added support for cookie token storage for web client authentication
-    - Added /user/signup & /user/login & /user/logout for web clients
+    - Added /user/register & /user/login & /user/logout for web clients
 
 ### Changed
 
@@ -169,6 +169,19 @@ All changes applied on this project code base will be documented in this file.
 
     - Changed env variables names
     - Fixed activation subdocument in user model having an _id field
+
+## [0.1.0-test.8] - 2023-05-07
+
+### Added
+
+    New devActivation option on registration for development and test purposes
+
+### Changed
+
+    Changed auth routes names, signup => register, login => signIn, logout => signOut
+    Changed requireLogin to requireAuth
+    Changed activation: account not found error message
+    Fixed mistakes in the API docs
 
 ## TODOS
 

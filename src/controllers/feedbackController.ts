@@ -1,7 +1,7 @@
 // imports
 import express from "express";
 import Video from "../models/video";
-import { requireLogin } from "../middleware/authentication";
+import { requireAuth } from "../middleware/authentication";
 import { PeekoRequest, VideoType } from "../types";
 import { checkVideoExists } from "../middleware/checkResourceExists";
 
@@ -14,7 +14,7 @@ const router = express.Router();
  */
 router.put(
     "/toggleLike",
-    requireLogin,
+    requireAuth,
     checkVideoExists,
     async (req: PeekoRequest, res) => {
         // destructure
@@ -55,7 +55,7 @@ router.put(
  * @put
  *      PUT request to like a video post
  */
-router.put("/likeVideo", requireLogin, async (req: PeekoRequest, res) => {
+router.put("/likeVideo", requireAuth, async (req: PeekoRequest, res) => {
     // destructure
     const { videoKey } = req.body;
     const userId = req.currentUser!._id;
@@ -104,7 +104,7 @@ router.put("/likeVideo", requireLogin, async (req: PeekoRequest, res) => {
  * @put
  *      PUT request to remove like from a video post
  */
-router.put("/unlikeVideo", requireLogin, async (req: PeekoRequest, res) => {
+router.put("/unlikeVideo", requireAuth, async (req: PeekoRequest, res) => {
     // destructure
     const { videoKey } = req.body;
     const userId = req.currentUser!._id;

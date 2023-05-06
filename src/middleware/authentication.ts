@@ -82,9 +82,9 @@ export const authenticateUser = async (
 };
 
 /**
- * This function only allows access for those who are logged in with activated accounts
+ * This function only allows access for those who are authenticated with activated accounts
  */
-export const requireLogin = (
+export const requireAuth = (
     req: PeekoRequest,
     res: Response,
     next: NextFunction
@@ -96,7 +96,7 @@ export const requireLogin = (
     } else if (req.currentUser) {
         errorMessage = "Account Activation Required";
     } else {
-        errorMessage = "Login required for this action";
+        errorMessage = "Sign in is required for this action";
     }
 
     res.status(400).json({

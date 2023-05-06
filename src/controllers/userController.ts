@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import cron from "node-cron";
 import User from "../models/user";
 import { UserObjectType, UserType, PeekoRequest } from "../types";
-import { createToken, requireLogin } from "../middleware/authentication";
+import { createToken, requireAuth } from "../middleware/authentication";
 import { validateUser } from "../utils/validation";
 import { generateActivationCode, formatTime } from "../utils/utils";
 import sendEmail from "../utils/mailer";
@@ -53,15 +53,21 @@ cron.schedule("* * * * *", async () => {
 
 /**
  * @post
- *      POST request to attempt signup
+ *      POST request to attempt registration
  */
-router.post("/signup", checkClientExists, async (req, res) => {
+router.post("/register", checkClientExists, async (req, res) => {
     // destructure
-    const { username, email, password, client } = req.body;
+    const { username, email, password, client, devActivation } = req.body;
 
     try {
-        // get user ip address
+        // get user ip address & attach it to deviceInfo object
         const ipAddress = requestIp.getClientIp(req) || undefined;
+        const deviceInfo = req.body.deviceInfo || {};
+        deviceInfo.ipAddress = ipAddress;
+
+        // check devActivation
+        let devActivated: boolean =
+            devActivation && devActivation.password === process.env.DEV_CODE;
 
         // generate activation code
         const activationCode = generateActivationCode();
@@ -71,11 +77,9 @@ router.post("/signup", checkClientExists, async (req, res) => {
             username,
             email,
             password,
-            deviceInfo: {
-                ipAddress,
-            },
+            deviceInfo,
             activation: {
-                activated: false,
+                activated: devActivated && devActivation.autoActivate,
                 activationCode,
                 attemptsLeft: 5,
                 blocked: false,
@@ -102,7 +106,9 @@ router.post("/signup", checkClientExists, async (req, res) => {
         userDocument.activation = undefined;
 
         // send activation code on email
-        await sendEmail(email, username, activationCode);
+        if (!devActivated || !devActivation.autoActivate) {
+            await sendEmail(email, username, activationCode);
+        }
 
         // create & set token
         const token = await createToken(userDocument._id.toString());
@@ -116,6 +122,10 @@ router.post("/signup", checkClientExists, async (req, res) => {
             success: true,
             userDocument,
             token: client === "mobile" ? token : undefined,
+            activationCode:
+                devActivated && !devActivation.autoActivate
+                    ? activationCode
+                    : undefined,
         });
     } catch (err: any) {
         // if not mongoose validation error, log to server console
@@ -148,9 +158,9 @@ router.post("/signup", checkClientExists, async (req, res) => {
 
 /**
  * @post
- *      POST request to login
+ *      POST request to sign in
  */
-router.post("/login", checkClientExists, async (req, res) => {
+router.post("/signIn", checkClientExists, async (req, res) => {
     // destructure
     const { credential, password, client } = req.body;
 
@@ -203,9 +213,9 @@ router.post("/login", checkClientExists, async (req, res) => {
 
 /**
  * @post
- *      POST request to logout
+ *      POST request to sign out
  */
-router.post("/logout", requireLogin, checkClientExists, (req, res) => {
+router.post("/signOut", requireAuth, checkClientExists, (req, res) => {
     // get client type
     const { client } = req.body;
 
@@ -215,7 +225,7 @@ router.post("/logout", requireLogin, checkClientExists, (req, res) => {
     } else if (client === "mobile") {
         res.status(400).json({
             success: false,
-            error: "Logout operation on mobile client is handled on the client itself",
+            error: "Sign out operation on mobile client is handled on the client itself",
         });
     } else {
         res.status(400).json({
@@ -229,40 +239,36 @@ router.post("/logout", requireLogin, checkClientExists, (req, res) => {
  * @delete
  *      DELETE request to delete a user from the db
  */
-router.delete(
-    "/deleteAccount",
-    requireLogin,
-    async (req: PeekoRequest, res) => {
-        // destructure
-        const userId = req.currentUser!._id;
+router.delete("/deleteAccount", requireAuth, async (req: PeekoRequest, res) => {
+    // destructure
+    const userId = req.currentUser!._id;
 
-        try {
-            // delete user
-            const deletedUserDocument: UserType | null =
-                await User.findByIdAndDelete(userId);
+    try {
+        // delete user
+        const deletedUserDocument: UserType | null =
+            await User.findByIdAndDelete(userId);
 
-            // if user not found
-            if (!deletedUserDocument) {
-                return res.status(400).json({
-                    success: false,
-                    error: "User not found",
-                });
-            }
-
-            // return response
-            res.status(200).json({
-                success: true,
-                deletedUserDocument,
-            });
-        } catch (err: any) {
-            console.error(err);
-            res.status(400).json({
+        // if user not found
+        if (!deletedUserDocument) {
+            return res.status(400).json({
                 success: false,
-                error: err.message,
+                error: "User not found",
             });
         }
+
+        // return response
+        res.status(200).json({
+            success: true,
+            deletedUserDocument,
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
+        });
     }
-);
+});
 
 /**
  * @put
@@ -273,7 +279,7 @@ router.put("/activateAccount", async (req: PeekoRequest, res) => {
     if (!req.currentUser) {
         return res.status(400).json({
             success: false,
-            error: "Account activation must be done on the same device (and browser if web client) used for signup",
+            error: "Account not found, you are possibly trying to activate an account after more than 10 minutes of registration. Redo registration process",
         });
     }
 
@@ -286,7 +292,7 @@ router.put("/activateAccount", async (req: PeekoRequest, res) => {
 
         return res.status(400).json({
             success: false,
-            error: `Email and username blocked from signup until ${unblockTime}`,
+            error: `Email and username blocked from registration until ${unblockTime}`,
         });
     }
 
@@ -319,7 +325,7 @@ router.put("/activateAccount", async (req: PeekoRequest, res) => {
             });
 
             errorMessage =
-                "You used all your activation attempts, email and username will be blocked from signup for 24 hours";
+                "You used all your activation attempts, email and username will be blocked from registration for 24 hours";
         }
 
         // if activation success, else
@@ -349,7 +355,7 @@ router.put("/activateAccount", async (req: PeekoRequest, res) => {
  * @put
  *      PUT request to update the recorded IP address of the user
  */
-router.put("/updateIpAddress", requireLogin, async (req: PeekoRequest, res) => {
+router.put("/updateIpAddress", requireAuth, async (req: PeekoRequest, res) => {
     // destructure ip address
     const userId = req.currentUser!._id;
 

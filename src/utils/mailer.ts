@@ -78,12 +78,12 @@ const getMailContent = (username: string, activationCode: string): string => {
 		<div class="container">
 		  <h1 class="gradient">Peeko Account Activation</h1>
 		  <p>Hello ${username}</p>
-		  <p>Thank you for signing up for Peeko! Please use the following code to activate your account:</p>
+		  <p>Thank you for registering on Peeko! Please use the following code to activate your account:</p>
 		  <p style="text-align: center; font-size: 24px; font-weight: bold;">${activationCode}</p>
 		  <p>If you did not request this activation code, please disregard this email.</p>
 		  <p>Thank you,<br>The Peeko Team</p>
 		  <div class="footer">
-			<p>You are receiving this email because you signed up for Peeko. If you did not sign up for Peeko, please ignore this email.</p>
+			<p>You are receiving this email because you registered on Peeko. If you did not register for Peeko, please ignore this email.</p>
 			<p><a href="#">Peeko Website</a></p>
 		  </div>
 		</div>

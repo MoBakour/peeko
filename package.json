@@ -1,6 +1,6 @@
 {
     "name": "peeko-backend",
-    "version": "0.1.1-test.7",
+    "version": "0.1.0-test.8",
     "description": "",
     "main": "./dist/app.js",
     "scripts": {
