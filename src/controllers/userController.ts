@@ -296,6 +296,14 @@ router.put("/activateAccount", async (req: PeekoRequest, res) => {
         });
     }
 
+    // if user already activated
+    if (req.currentUser.activation!.activated) {
+        return res.status(400).json({
+            success: false,
+            error: "Invalid request. Account already activated",
+        });
+    }
+
     // destructure
     const userId = req.currentUser._id;
     const activationCode = req.currentUser.activation!.activationCode;

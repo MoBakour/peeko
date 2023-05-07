@@ -183,9 +183,14 @@ All changes applied on this project code base will be documented in this file.
     Changed activation: account not found error message
     Fixed mistakes in the API docs
 
+## [0.1.1-test.8] - 2023-05-07
+
+### Added
+
+    Conditional check whether the user is already activated before attempting an activation process
+
 ## TODOS
 
-    - [ ] Check unnecessary mongodb user collection calls due to req.currentUser object
     - [ ] Build web client-side with React.js and Next.js
     - [ ] Major testing (test all routes)
     - [ ] Keep CORS in mind
