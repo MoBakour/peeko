@@ -66,8 +66,8 @@ router.post("/register", checkClientExists, async (req, res) => {
         deviceInfo.ipAddress = ipAddress;
 
         // check devActivation
-        let devActivated: boolean =
-            devActivation && devActivation.password === process.env.DEV_CODE;
+        const devActivated: boolean =
+            !!devActivation && devActivation.password === process.env.DEV_CODE;
 
         // generate activation code
         const activationCode = generateActivationCode();

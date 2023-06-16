@@ -188,7 +188,7 @@ router.delete(
 
         try {
             // if deleter is not publisher
-            if (req.currentUser!._id !== videoDocument.uploaderId) {
+            if (req.currentUser!._id.toString() !== videoDocument.uploaderId) {
                 return res.status(400).json({
                     success: false,
                     error: "Unauthorized Action",

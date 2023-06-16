@@ -189,6 +189,12 @@ All changes applied on this project code base will be documented in this file.
 
     Conditional check whether the user is already activated before attempting an activation process
 
+## [0.1.1-test.9] - 2023-06-16
+
+### Changed
+
+    Fixed some bugs in activation system and video deleting process
+
 ## TODOS
 
     - [ ] Build web client-side with React.js and Next.js
