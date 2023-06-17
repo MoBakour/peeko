@@ -21,8 +21,17 @@ import { authenticateUser } from "./middleware/authentication";
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
 app.use(cookieParser());
+app.use(
+    cors({
+        origin: [
+            "http://localhost:3000",
+            "http://localhost:4000",
+            "https://api-peeko.onrender.com",
+        ],
+        credentials: true,
+    })
+);
 
 // env variables
 const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
