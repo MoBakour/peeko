@@ -195,6 +195,12 @@ All changes applied on this project code base will be documented in this file.
 
     Fixed some bugs in activation system and video deleting process
 
+## [0.1.1-test.10] - 2023-06-17
+
+### Added
+
+    Added /user/checkAuth route
+
 ## TODOS
 
     - [ ] Build web client-side with React.js and Next.js

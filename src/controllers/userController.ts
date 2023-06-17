@@ -395,5 +395,19 @@ router.put("/updateIpAddress", requireAuth, async (req: PeekoRequest, res) => {
     }
 });
 
+/**
+ * @get
+ *      GET request to check if user is authenticated or not
+ */
+router.get("/checkAuth", requireAuth, async (req: PeekoRequest, res) => {
+    return res.status(200).json({
+        success: true,
+        userData: {
+            username: req.currentUser!.username,
+            userId: req.currentUser!._id,
+        },
+    });
+});
+
 // export router
 export default router;
