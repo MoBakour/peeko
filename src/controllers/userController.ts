@@ -10,7 +10,6 @@ import { createToken, requireAuth } from "../middleware/authentication";
 import { validateUser } from "../utils/validation";
 import { generateActivationCode, formatTime } from "../utils/utils";
 import sendEmail from "../utils/mailer";
-import { checkClientExists } from "../middleware/checkResourceExists";
 
 // create router
 const router = express.Router();
@@ -55,9 +54,9 @@ cron.schedule("* * * * *", async () => {
  * @post
  *      POST request to attempt registration
  */
-router.post("/register", checkClientExists, async (req, res) => {
+router.post("/register", async (req, res) => {
     // destructure
-    const { username, email, password, client, devActivation } = req.body;
+    const { username, email, password, devActivation } = req.body;
 
     try {
         // get user ip address & attach it to deviceInfo object
@@ -103,7 +102,8 @@ router.post("/register", checkClientExists, async (req, res) => {
         // insert to db
         const userDocument: UserType = await User.create(userObject);
         userDocument.password = undefined;
-        userDocument.activation = undefined;
+        userDocument.deviceInfo = undefined;
+        userDocument.activation!.activationCode = undefined;
 
         // send activation code on email
         if (!devActivated || !devActivation.autoActivate) {
@@ -113,15 +113,11 @@ router.post("/register", checkClientExists, async (req, res) => {
         // create & set token
         const token = await createToken(userDocument._id.toString());
 
-        if (client === "web") {
-            res.cookie("token", token, tokenCookieOptions());
-        }
-
         // return response
         res.status(200).json({
             success: true,
             userDocument,
-            token: client === "mobile" ? token : undefined,
+            token: token,
             activationCode:
                 devActivated && !devActivation.autoActivate
                     ? activationCode
@@ -160,9 +156,9 @@ router.post("/register", checkClientExists, async (req, res) => {
  * @post
  *      POST request to sign in
  */
-router.post("/signIn", checkClientExists, async (req, res) => {
+router.post("/signIn", async (req, res) => {
     // destructure
-    const { credential, password, client } = req.body;
+    const { credential, password } = req.body;
 
     try {
         // try to find user
@@ -187,50 +183,23 @@ router.post("/signIn", checkClientExists, async (req, res) => {
             });
         }
         userDocument.password = undefined;
-        userDocument.activation = undefined;
+        userDocument.deviceInfo = undefined;
+        userDocument.activation!.activationCode = undefined;
 
         // create & set token
         const token = await createToken(userDocument._id.toString());
-
-        if (client === "web") {
-            res.cookie("token", token, tokenCookieOptions());
-        }
 
         // return response
         res.status(200).json({
             success: true,
             userDocument,
-            token: client === "mobile" ? token : undefined,
+            token: token,
         });
     } catch (err: any) {
         console.error(err);
         res.status(400).json({
             success: false,
             error: err.message,
-        });
-    }
-});
-
-/**
- * @post
- *      POST request to sign out
- */
-router.post("/signOut", requireAuth, checkClientExists, (req, res) => {
-    // get client type
-    const { client } = req.body;
-
-    if (client === "web") {
-        res.cookie("token", "", tokenCookieOptions(1));
-        res.status(200).json({ success: true });
-    } else if (client === "mobile") {
-        res.status(400).json({
-            success: false,
-            error: "Sign out operation on mobile client is handled on the client itself",
-        });
-    } else {
-        res.status(400).json({
-            success: false,
-            error: "Invalid client type",
         });
     }
 });
@@ -256,6 +225,10 @@ router.delete("/deleteAccount", requireAuth, async (req: PeekoRequest, res) => {
             });
         }
 
+        deletedUserDocument.password = undefined;
+        deletedUserDocument.deviceInfo = undefined;
+        deletedUserDocument.activation!.activationCode = undefined;
+
         // return response
         res.status(200).json({
             success: true,
@@ -279,7 +252,7 @@ router.put("/activateAccount", async (req: PeekoRequest, res) => {
     if (!req.currentUser) {
         return res.status(400).json({
             success: false,
-            error: "Account not found, you are possibly trying to activate an account after more than 10 minutes of registration. Redo registration process",
+            error: "Account not found",
         });
     }
 
@@ -292,6 +265,7 @@ router.put("/activateAccount", async (req: PeekoRequest, res) => {
 
         return res.status(400).json({
             success: false,
+            attemptsLeft: 0,
             error: `Email and username blocked from registration until ${unblockTime}`,
         });
     }
@@ -393,20 +367,6 @@ router.put("/updateIpAddress", requireAuth, async (req: PeekoRequest, res) => {
             error: err.message,
         });
     }
-});
-
-/**
- * @get
- *      GET request to check if user is authenticated or not
- */
-router.get("/checkAuth", requireAuth, async (req: PeekoRequest, res) => {
-    return res.status(200).json({
-        success: true,
-        userData: {
-            username: req.currentUser!.username,
-            userId: req.currentUser!._id,
-        },
-    });
 });
 
 // export router

@@ -2,12 +2,16 @@
 import express from "express";
 import { MulterError } from "multer";
 import { getVideoDurationInSeconds } from "get-video-duration";
-import { upload, deleteFile } from "../models/multerSetup";
-import { s3_download, s3_upload, s3_delete } from "../models/s3";
+
 import { MulterFileType, VideoType, PeekoRequest } from "../types";
-import Video from "../models/video";
+
 import { checkVideoExists } from "../middleware/checkResourceExists";
 import { requireAuth } from "../middleware/authentication";
+
+import { upload, deleteFile } from "../models/multerSetup";
+import { s3_download, s3_upload, s3_delete } from "../models/s3";
+import Video from "../models/video";
+import User from "../models/user";
 
 // create router
 const router = express.Router();
@@ -117,6 +121,13 @@ router.get(
             // get video from db
             const videoDocument = req.resource as VideoType;
 
+            // set video as viewed
+            await User.findByIdAndUpdate(req.currentUser?._id, {
+                $push: {
+                    viewed: videoDocument.videoKey,
+                },
+            });
+
             res.status(200).json({
                 success: true,
                 videoDocument,
@@ -132,14 +143,13 @@ router.get(
 );
 
 /**
- * @post
- *      POST request to get random video data from the database.
- *      It is a POST method because a body is needed to pass data.
+ * @get
+ *      GET request to get random video data from the database.
  */
-router.post("/getVideos", requireAuth, async (req, res) => {
+router.get("/getVideos/:count", requireAuth, async (req: PeekoRequest, res) => {
     // destructure
-    const count = parseInt(req.body.count as string) || 10;
-    const viewed: string[] = req.body.viewed || [];
+    const count = parseInt(req.params.count as string) || 10;
+    const viewed: string[] = req.currentUser!.viewed! || [];
 
     try {
         /**

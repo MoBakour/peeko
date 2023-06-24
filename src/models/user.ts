@@ -19,6 +19,10 @@ const userSchema = new Schema(
             required: true,
             trim: true,
         },
+        viewed: {
+            type: [String],
+            required: true,
+        },
         deviceInfo: {
             fingerprint: String,
             brand: String,

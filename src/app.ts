@@ -22,23 +22,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(
-    cors({
-        origin: [
-            "http://localhost:3000",
-            "http://localhost:4000",
-            "https://api-peeko.onrender.com",
-        ],
-        credentials: true,
-    })
-);
+app.use(cors());
 
 // env variables
 const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
 const SERVER_PORT_STRING = process.env.port || process.env.PORT || "3000";
 const SERVER_PORT = parseInt(SERVER_PORT_STRING);
 
-const API_VERSION = "0.1.1-test.10";
+const API_VERSION = "0.1.1-dev.11";
 
 // connect to db
 mongoose

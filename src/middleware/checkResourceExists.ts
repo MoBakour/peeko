@@ -1,6 +1,6 @@
 // imports
 import { Response, NextFunction } from "express";
-import { ClientType, PeekoRequest, VideoType } from "../types";
+import { PeekoRequest, VideoType } from "../types";
 import Video from "../models/video";
 
 // check if video exists in the database
@@ -34,25 +34,4 @@ export const checkVideoExists = async (
             error: err.message,
         });
     }
-};
-
-// check if client type is set
-export const checkClientExists = async (
-    req: PeekoRequest,
-    res: Response,
-    next: NextFunction
-) => {
-    // get client type from request body
-    const { client } = req.body;
-
-    // validate client type
-    const validClientTypes: ClientType[] = ["web", "mobile"];
-    if (!validClientTypes.includes(client?.toLowerCase())) {
-        return res.status(400).json({
-            success: false,
-            error: "Invalid client type",
-        });
-    }
-
-    next();
 };

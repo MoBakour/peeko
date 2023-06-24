@@ -60,9 +60,9 @@ All changes applied on this project code base will be documented in this file.
 
     - Reduced and eliminated unnecessary code and functions
 
-## [0.1.0-test.1] - 2023-04-24
+## [0.1.0-dev.1] - 2023-04-24
 
-## [0.1.0-test.2] - 2023-04-26
+## [0.1.0-dev.2] - 2023-04-26
 
 ### Changed
 
@@ -75,7 +75,7 @@ All changes applied on this project code base will be documented in this file.
 
     - Removed requirement of authentication for streaming video
 
-## [0.1.0-test.3] - 2023-04-29
+## [0.1.0-dev.3] - 2023-04-29
 
 ### Added
 
@@ -91,7 +91,7 @@ All changes applied on this project code base will be documented in this file.
 
     - Removed an unnecessary route from video controller, (the /video/download/videoData route)
 
-## [0.1.0-test.4] - 2023-04-30
+## [0.1.0-dev.4] - 2023-04-30
 
 ### Added
 
@@ -115,7 +115,7 @@ All changes applied on this project code base will be documented in this file.
 
     - Switched from URL query to URL params in GET/DELETE requests
 
-## [0.1.0-test.5] - 2023-05-02
+## [0.1.0-dev.5] - 2023-05-02
 
 ### Added
 
@@ -127,7 +127,7 @@ All changes applied on this project code base will be documented in this file.
     - Separated web user routes from mobile user routes from general routes
     - Renamed response object fields to follow unified conventions
 
-## [0.1.0-test.6] - 2023-05-03
+## [0.1.0-dev.6] - 2023-05-03
 
 ### Added
 
@@ -154,7 +154,7 @@ All changes applied on this project code base will be documented in this file.
 
     - Removed mobileUserController
 
-## [0.1.0-test.7] - 2023-05-05
+## [0.1.0-dev.7] - 2023-05-05
 
 ### Changed
 
@@ -163,14 +163,14 @@ All changes applied on this project code base will be documented in this file.
     - Merged some util files under one file in ./utils/utils.ts
     - Small patches around the code base
 
-## [0.1.1-test.7] - 2023-05-06
+## [0.1.1-dev.7] - 2023-05-06
 
 ### Changed
 
     - Changed env variables names
     - Fixed activation subdocument in user model having an _id field
 
-## [0.1.0-test.8] - 2023-05-07
+## [0.1.0-dev.8] - 2023-05-07
 
 ### Added
 
@@ -183,23 +183,31 @@ All changes applied on this project code base will be documented in this file.
     Changed activation: account not found error message
     Fixed mistakes in the API docs
 
-## [0.1.1-test.8] - 2023-05-07
+## [0.1.1-dev.8] - 2023-05-07
 
 ### Added
 
     Conditional check whether the user is already activated before attempting an activation process
 
-## [0.1.1-test.9] - 2023-06-16
+## [0.1.1-dev.9] - 2023-06-16
 
 ### Changed
 
     Fixed some bugs in activation system and video deleting process
 
-## [0.1.1-test.10] - 2023-06-17
+## [0.1.1-dev.10] - 2023-06-17
 
 ### Added
 
     Added /user/checkAuth route
+
+## [0.1.1-dev.11] - 2023-06-25
+
+### CHANGED
+
+    Added viewed field in user model
+    Logged user viewed videos in the DB
+    Used the logged user viewed videos to decide what videos to exclude when getting videos for user
 
 ## TODOS
 

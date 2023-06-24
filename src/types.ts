@@ -5,9 +5,6 @@ import { Request } from "express";
 // MulterFile type
 export type MulterFileType = Express.Multer.File;
 
-// Client Types
-export type ClientType = "web" | "mobile";
-
 // Request with resource type
 export interface PeekoRequest extends Request {
     resource?: UserType | CommentType | VideoType;
@@ -25,6 +22,7 @@ export interface UserObjectType {
     username: string;
     email: string;
     password?: string;
+    viewed?: string[];
     deviceInfo?: {
         fingerprint?: string;
         brand?: string;
@@ -38,7 +36,7 @@ export interface UserObjectType {
     };
     activation?: {
         activated: boolean;
-        activationCode: string;
+        activationCode?: string;
         attemptsLeft: number;
         blocked: boolean;
     };
@@ -61,4 +59,5 @@ export interface VideoType extends Document, MongoTimestamps {
     uploaderUsername: string;
     videoKey: string;
     likes: string[];
+    commentsCount: number;
 }
