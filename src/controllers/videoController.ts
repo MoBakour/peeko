@@ -146,52 +146,56 @@ router.get(
  * @get
  *      GET request to get random video data from the database.
  */
-router.get("/getVideos/:count", requireAuth, async (req: PeekoRequest, res) => {
-    // destructure
-    const count = parseInt(req.params.count as string) || 10;
-    const viewed: string[] = req.currentUser!.viewed! || [];
+router.get(
+    "/getVideos/:count?",
+    requireAuth,
+    async (req: PeekoRequest, res) => {
+        // destructure
+        const count = parseInt(req.params.count as string) || 10;
+        const viewed: string[] = req.currentUser!.viewed! || [];
 
-    try {
-        /**
-         * Use MongoDB $match aggregation stage to exclude
-         * previously watched videos from the pipeline.
-         *
-         * Use MongoDB $sample aggregation stage to get a
-         * #count number of randomly selected videos.
-         *
-         * Use MongoDB $group aggregation stage to make sure
-         * we don't get duplicate documents.
-         */
-        let videoDocuments: VideoType[] = await Video.aggregate([
-            { $match: { videoKey: { $nin: viewed } } },
-            { $sample: { size: count } },
-            { $group: { _id: "$_id", doc: { $first: "$$ROOT" } } },
-            { $replaceWith: "$doc" },
-        ]);
-
-        // backup in case no unseen videos found
-        if (videoDocuments.length === 0) {
-            videoDocuments = await Video.aggregate([
-                { $match: {} },
+        try {
+            /**
+             * Use MongoDB $match aggregation stage to exclude
+             * previously watched videos from the pipeline.
+             *
+             * Use MongoDB $sample aggregation stage to get a
+             * #count number of randomly selected videos.
+             *
+             * Use MongoDB $group aggregation stage to make sure
+             * we don't get duplicate documents.
+             */
+            let videoDocuments: VideoType[] = await Video.aggregate([
+                { $match: { videoKey: { $nin: viewed } } },
                 { $sample: { size: count } },
                 { $group: { _id: "$_id", doc: { $first: "$$ROOT" } } },
                 { $replaceWith: "$doc" },
             ]);
-        }
 
-        // return result
-        return res.status(200).json({
-            success: true,
-            videoDocuments,
-        });
-    } catch (err: any) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err.message,
-        });
+            // backup in case no unseen videos found
+            if (videoDocuments.length === 0) {
+                videoDocuments = await Video.aggregate([
+                    { $match: {} },
+                    { $sample: { size: count } },
+                    { $group: { _id: "$_id", doc: { $first: "$$ROOT" } } },
+                    { $replaceWith: "$doc" },
+                ]);
+            }
+
+            // return result
+            return res.status(200).json({
+                success: true,
+                videoDocuments,
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(400).json({
+                success: false,
+                error: err.message,
+            });
+        }
     }
-});
+);
 
 /**
  * @delete
