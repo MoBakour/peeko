@@ -182,9 +182,12 @@ router.post("/signIn", async (req, res) => {
                 error: "Password is incorrect",
             });
         }
+
+        // remove unwanted properties
         userDocument.password = undefined;
         userDocument.deviceInfo = undefined;
         userDocument.activation!.activationCode = undefined;
+        userDocument.viewed = undefined;
 
         // create & set token
         const token = await createToken(userDocument._id.toString());
@@ -225,9 +228,11 @@ router.delete("/deleteAccount", requireAuth, async (req: PeekoRequest, res) => {
             });
         }
 
+        // remove unwanted properties
         deletedUserDocument.password = undefined;
         deletedUserDocument.deviceInfo = undefined;
         deletedUserDocument.activation!.activationCode = undefined;
+        deletedUserDocument.viewed = undefined;
 
         // return response
         res.status(200).json({

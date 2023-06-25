@@ -214,7 +214,14 @@ All changes applied on this project code base will be documented in this file.
 ### CHANGED
 
     /getVideos gets seen videos by user in case no unseen videos where found
-    Released the first beta release
+    Released the first beta version
+
+### [1.0.0-beta.2] - 2023-06-25
+
+### ADDED
+
+    Added new /viewVideo route in video controller as a low network usage alternative to marking videos as viewed with /getVideo
+    Increased projection of fields when sending back user documents to client side
 
 ## TODOS
 

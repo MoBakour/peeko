@@ -123,7 +123,7 @@ router.get(
 
             // set video as viewed
             await User.findByIdAndUpdate(req.currentUser?._id, {
-                $push: {
+                $addToSet: {
                     viewed: videoDocument.videoKey,
                 },
             });
@@ -152,7 +152,7 @@ router.get(
     async (req: PeekoRequest, res) => {
         // destructure
         const count = parseInt(req.params.count as string) || 10;
-        const viewed: string[] = req.currentUser!.viewed! || [];
+        const viewed: string[] = req.currentUser!.viewed || [];
 
         try {
             /**
@@ -189,6 +189,43 @@ router.get(
             });
         } catch (err: any) {
             console.error(err);
+            res.status(400).json({
+                success: false,
+                error: err.message,
+            });
+        }
+    }
+);
+
+/**
+ * @put
+ *      PUT request to mark video as viewed by the user
+ */
+router.put(
+    "/viewVideo",
+    requireAuth,
+    checkVideoExists,
+    async (req: PeekoRequest, res) => {
+        // destructure
+        const videoKey = (req.resource as VideoType).videoKey;
+
+        try {
+            const update = await User.findByIdAndUpdate(req.currentUser!._id, {
+                $addToSet: { viewed: videoKey },
+            });
+
+            if (!update) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Failed to mark video as viewed",
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+            });
+        } catch (err: any) {
+            console.error(err.message);
             res.status(400).json({
                 success: false,
                 error: err.message,

@@ -1,5 +1,4 @@
 // imports
-import fs from "fs";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { Response, NextFunction } from "express";
 import { PeekoRequest } from "../types";
