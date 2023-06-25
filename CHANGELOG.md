@@ -209,6 +209,13 @@ All changes applied on this project code base will be documented in this file.
     Logged user viewed videos in the DB
     Used the logged user viewed videos to decide what videos to exclude when getting videos for user
 
+## [1.0.0-beta.1] - 2023-06-25
+
+### CHANGED
+
+    /getVideos gets seen videos by user in case no unseen videos where found
+    Released the first beta release
+
 ## TODOS
 
     - [ ] Build web client-side with React.js and Next.js

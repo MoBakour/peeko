@@ -162,12 +162,22 @@ router.get("/getVideos/:count", requireAuth, async (req: PeekoRequest, res) => {
          * Use MongoDB $group aggregation stage to make sure
          * we don't get duplicate documents.
          */
-        const videoDocuments: VideoType[] = await Video.aggregate([
+        let videoDocuments: VideoType[] = await Video.aggregate([
             { $match: { videoKey: { $nin: viewed } } },
             { $sample: { size: count } },
             { $group: { _id: "$_id", doc: { $first: "$$ROOT" } } },
             { $replaceWith: "$doc" },
         ]);
+
+        // backup in case no unseen videos found
+        if (videoDocuments.length === 0) {
+            videoDocuments = await Video.aggregate([
+                { $match: {} },
+                { $sample: { size: count } },
+                { $group: { _id: "$_id", doc: { $first: "$$ROOT" } } },
+                { $replaceWith: "$doc" },
+            ]);
+        }
 
         // return result
         return res.status(200).json({
