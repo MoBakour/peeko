@@ -99,6 +99,12 @@ router.get("/streamVideo/:videoKey", checkVideoExists, async (req, res) => {
     try {
         // get video from s3
         const readStream = s3_download(videoKey);
+
+        // set appropriate headers for video streaming
+        res.setHeader("Content-Type", "video/*");
+        res.setHeader("Content-Disposition", "inline");
+
+        // stream video back to client
         readStream.pipe(res);
     } catch (err: any) {
         console.error(err);
