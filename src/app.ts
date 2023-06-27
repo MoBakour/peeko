@@ -22,14 +22,21 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// cors
 app.use(cors());
+// app.use(
+//     cors({
+//         origin: "https://peeko.netlify.app",
+//     })
+// );
 
 // env variables
 const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
 const SERVER_PORT_STRING = process.env.port || process.env.PORT || "3000";
 const SERVER_PORT = parseInt(SERVER_PORT_STRING);
 
-const API_VERSION = "1.0.0-beta.2";
+const API_VERSION = "1.0.1-beta.2";
 
 // connect to db
 mongoose

@@ -174,57 +174,62 @@ All changes applied on this project code base will be documented in this file.
 
 ### Added
 
-    New devActivation option on registration for development and test purposes
+    - New devActivation option on registration for development and test purposes
 
 ### Changed
 
-    Changed auth routes names, signup => register, login => signIn, logout => signOut
-    Changed requireLogin to requireAuth
-    Changed activation: account not found error message
-    Fixed mistakes in the API docs
+    - Changed auth routes names, signup => register, login => signIn, logout => signOut
+    - Changed requireLogin to requireAuth
+    - Changed activation: account not found error message
+    - Fixed mistakes in the API docs
 
 ## [0.1.1-dev.8] - 2023-05-07
 
 ### Added
 
-    Conditional check whether the user is already activated before attempting an activation process
+    - Conditional check whether the user is already activated before attempting an activation process
 
 ## [0.1.1-dev.9] - 2023-06-16
 
 ### Changed
 
-    Fixed some bugs in activation system and video deleting process
+    - Fixed some bugs in activation system and video deleting process
 
 ## [0.1.1-dev.10] - 2023-06-17
 
 ### Added
 
-    Added /user/checkAuth route
+    - Added /user/checkAuth route
 
 ## [0.1.1-dev.11] - 2023-06-25
 
 ### CHANGED
 
-    Added viewed field in user model
-    Logged user viewed videos in the DB
-    Used the logged user viewed videos to decide what videos to exclude when getting videos for user
+    - Added viewed field in user model
+    - Logged user viewed videos in the DB
+    - Used the logged user viewed videos to decide what videos to exclude when getting videos for user
 
 ## [1.0.0-beta.1] - 2023-06-25
 
 ### CHANGED
 
-    /getVideos gets seen videos by user in case no unseen videos where found
-    Released the first beta version
+    - /getVideos gets seen videos by user in case no unseen videos where found
+    - Released the first beta version
 
-### [1.0.0-beta.2] - 2023-06-25
+## [1.0.0-beta.2] - 2023-06-25
 
 ### ADDED
 
-    Added new /viewVideo route in video controller as a low network usage alternative to marking videos as viewed with /getVideo
-    Increased projection of fields when sending back user documents to client side
+    - Added new /viewVideo route in video controller as a low network usage alternative to marking videos as viewed with /getVideo
+    - Increased projection of fields when sending back user documents to client side
+
+## [1.0.1-beta.2] - 2023-06-27
+
+### Added
+
+    - Set appropriate headers when streaming video to client
 
 ## TODOS
 
-    - [ ] Build web client-side with React.js and Next.js
     - [ ] Major testing (test all routes)
     - [ ] Keep CORS in mind
