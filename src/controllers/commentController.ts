@@ -121,7 +121,9 @@ router.delete(
             }
 
             // if deleter is not commentor
-            if (commentDocument.commentorId !== req.currentUser!._id) {
+            if (
+                commentDocument.commentorId !== req.currentUser!._id.toString()
+            ) {
                 return res.status(400).json({
                     success: false,
                     error: "Unauthorized Action",

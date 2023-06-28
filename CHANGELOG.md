@@ -229,6 +229,12 @@ All changes applied on this project code base will be documented in this file.
 
     - Set appropriate headers when streaming video to client
 
+## [1.0.3-beta.3] = 2023-06-28
+
+### Changed
+
+    - Fixed a bug where /deleteComment route wouldn't work because identification check would always return false
+
 ## TODOS
 
     - [ ] Major testing (test all routes)

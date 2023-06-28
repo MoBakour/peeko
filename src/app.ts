@@ -36,7 +36,7 @@ const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
 const SERVER_PORT_STRING = process.env.port || process.env.PORT || "3000";
 const SERVER_PORT = parseInt(SERVER_PORT_STRING);
 
-const API_VERSION = "1.0.1-beta.2";
+const API_VERSION = "1.0.3-beta.3";
 
 // connect to db
 mongoose
