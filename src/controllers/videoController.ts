@@ -97,15 +97,15 @@ router.get("/streamVideo/:videoKey", checkVideoExists, async (req, res) => {
     const { videoKey } = req.params;
 
     try {
-        // get video from s3
-        const readStream = s3_download(videoKey);
+        // get video from s3 and stream it back to client
+        s3_download(videoKey)
+            .on("httpHeaders", function (this: any, statusCode, headers) {
+                res.set("Content-Length", headers["content-length"]);
+                res.set("Content-Type", headers["content-type"]);
 
-        // set appropriate headers for video streaming
-        res.setHeader("Content-Type", "video/*");
-        res.setHeader("Content-Disposition", "inline");
-
-        // stream video back to client
-        readStream.pipe(res);
+                this.response.httpResponse.createUnbufferedStream().pipe(res);
+            })
+            .send();
     } catch (err: any) {
         console.error(err);
         res.status(400).json({

@@ -42,7 +42,7 @@ export const s3_download = (fileKey: string) => {
             Key: fileKey,
         };
 
-        return s3.getObject(downloadParams).createReadStream();
+        return s3.getObject(downloadParams);
     } catch (err: any) {
         console.error(err);
         throw err;
