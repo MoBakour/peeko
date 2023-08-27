@@ -40,7 +40,9 @@ const API_VERSION = "1.0.4-beta.2";
 
 // connect to db
 mongoose
-    .connect(MONGODB_CONNECTION_STRING)
+    .connect(MONGODB_CONNECTION_STRING, {
+        dbName: "peeko-database",
+    })
     .then(() => {
         app.listen(SERVER_PORT, () => {
             console.log(`Server running on port: ${SERVER_PORT}`);
