@@ -35,7 +35,6 @@ const userSchema = new Schema(
             },
         },
         activation: {
-            _id: false,
             activated: {
                 type: Boolean,
                 required: true,

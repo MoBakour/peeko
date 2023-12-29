@@ -1,4 +1,5 @@
 {
     "watch": ["src/"],
-    "ext": "js,json,mjs,ts"
+    "ext": "js,json,mjs,ts",
+    "exec": "tsc && node dist/app.js"
 }

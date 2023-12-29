@@ -60,9 +60,11 @@ All changes applied on this project code base will be documented in this file.
 
     - Reduced and eliminated unnecessary code and functions
 
-## [0.1.0-dev.1] - 2023-04-24
+## [0.0.0-dev] - 2023-04-24
 
-## [0.1.0-dev.2] - 2023-04-26
+    - Deployed first testing version
+
+## [0.0.1-dev] - 2023-04-26
 
 ### Changed
 
@@ -75,7 +77,7 @@ All changes applied on this project code base will be documented in this file.
 
     - Removed requirement of authentication for streaming video
 
-## [0.1.0-dev.3] - 2023-04-29
+## [0.0.2-dev] - 2023-04-29
 
 ### Added
 
@@ -91,7 +93,7 @@ All changes applied on this project code base will be documented in this file.
 
     - Removed an unnecessary route from video controller, (the /video/download/videoData route)
 
-## [0.1.0-dev.4] - 2023-04-30
+## [0.0.3-dev] - 2023-04-30
 
 ### Added
 
@@ -100,7 +102,6 @@ All changes applied on this project code base will be documented in this file.
 ### Changed
 
     - Made deviceInfo optional when creating user account
-
     - Switched to custom validation instead of mongoose validation
 
 ## [Unreleased] - 2023-05-01
@@ -115,7 +116,7 @@ All changes applied on this project code base will be documented in this file.
 
     - Switched from URL query to URL params in GET/DELETE requests
 
-## [0.1.0-dev.5] - 2023-05-02
+## [0.0.4-dev] - 2023-05-02
 
 ### Added
 
@@ -127,7 +128,7 @@ All changes applied on this project code base will be documented in this file.
     - Separated web user routes from mobile user routes from general routes
     - Renamed response object fields to follow unified conventions
 
-## [0.1.0-dev.6] - 2023-05-03
+## [0.0.5-dev] - 2023-05-03
 
 ### Added
 
@@ -154,7 +155,7 @@ All changes applied on this project code base will be documented in this file.
 
     - Removed mobileUserController
 
-## [0.1.0-dev.7] - 2023-05-05
+## [0.0.6-dev] - 2023-05-05
 
 ### Changed
 
@@ -163,14 +164,14 @@ All changes applied on this project code base will be documented in this file.
     - Merged some util files under one file in ./utils/utils.ts
     - Small patches around the code base
 
-## [0.1.1-dev.7] - 2023-05-06
+## [0.0.7-dev] - 2023-05-06
 
 ### Changed
 
     - Changed env variables names
     - Fixed activation subdocument in user model having an _id field
 
-## [0.1.0-dev.8] - 2023-05-07
+## [0.0.8-dev] - 2023-05-07
 
 ### Added
 
@@ -183,25 +184,25 @@ All changes applied on this project code base will be documented in this file.
     - Changed activation: account not found error message
     - Fixed mistakes in the API docs
 
-## [0.1.1-dev.8] - 2023-05-07
+## [0.0.9-dev] - 2023-05-07
 
 ### Added
 
     - Conditional check whether the user is already activated before attempting an activation process
 
-## [0.1.1-dev.9] - 2023-06-16
+## [0.0.10-dev] - 2023-06-16
 
 ### Changed
 
     - Fixed some bugs in activation system and video deleting process
 
-## [0.1.1-dev.10] - 2023-06-17
+## [0.0.11-dev] - 2023-06-17
 
 ### Added
 
     - Added /user/checkAuth route
 
-## [0.1.1-dev.11] - 2023-06-25
+## [0.0.12-dev] - 2023-06-25
 
 ### CHANGED
 
@@ -209,37 +210,44 @@ All changes applied on this project code base will be documented in this file.
     - Logged user viewed videos in the DB
     - Used the logged user viewed videos to decide what videos to exclude when getting videos for user
 
-## [1.0.0-beta.1] - 2023-06-25
+## [0.0.13-dev] - 2023-06-25
 
 ### CHANGED
 
     - /getVideos gets seen videos by user in case no unseen videos where found
-    - Released the first beta version
 
-## [1.0.0-beta.2] - 2023-06-25
+## [0.0.14-dev] - 2023-06-25
 
 ### ADDED
 
     - Added new /viewVideo route in video controller as a low network usage alternative to marking videos as viewed with /getVideo
     - Increased projection of fields when sending back user documents to client side
 
-## [1.0.1-beta.2] - 2023-06-27
+## [0.0.15-dev] - 2023-06-27
 
 ### Added
 
     - Set appropriate headers when streaming video to client
 
-## [1.0.3-beta.2] - 2023-06-28
+## [0.0.16-dev] - 2023-06-28
 
 ### Changed
 
     - Fixed a bug where /deleteComment route wouldn't work because identification check would always return false
 
-## [1.0.4-beta.2] - 2023-06-29
+## [0.0.17-dev] - 2023-06-29
 
 ### Changed
 
     - Changed video streaming method in /video/streamVideo
+
+## [0.1.0-beta] - 2023-12-29
+
+### Changed
+
+    - Updated AWS-SDK v2 to v3
+    - Fixed deleting a video not deleting associated comments with it
+    - Released the first beta version
 
 ## TODOS
 

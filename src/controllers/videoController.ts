@@ -9,9 +9,10 @@ import { checkVideoExists } from "../middleware/checkResourceExists";
 import { requireAuth } from "../middleware/authentication";
 
 import { upload, deleteFile } from "../models/multerSetup";
-import { s3_download, s3_upload, s3_delete } from "../models/s3";
 import Video from "../models/video";
+import Comment from "../models/comment";
 import User from "../models/user";
+import { s3_get, s3_post, s3_delete } from "../models/s3";
 
 // create router
 const router = express.Router();
@@ -60,14 +61,14 @@ router.post("/uploadVideo", requireAuth, async (req: PeekoRequest, res) => {
             }
 
             // upload to S3
-            const s3_result = await s3_upload(videoFile);
+            const videoKey = await s3_post(videoFile);
             await deleteFile(videoFile.path);
 
             // create video object structure
             const videoObject = {
                 uploaderId,
                 uploaderUsername,
-                videoKey: s3_result.Key,
+                videoKey,
             };
 
             // upload video data to db
@@ -98,14 +99,15 @@ router.get("/streamVideo/:videoKey", checkVideoExists, async (req, res) => {
 
     try {
         // get video from s3 and stream it back to client
-        s3_download(videoKey)
-            .on("httpHeaders", function (this: any, statusCode, headers) {
-                res.set("Content-Length", headers["content-length"]);
-                res.set("Content-Type", headers["content-type"]);
+        const result = await s3_get(videoKey);
+        const stream = result.Body as NodeJS.ReadableStream;
 
-                this.response.httpResponse.createUnbufferedStream().pipe(res);
-            })
-            .send();
+        res.header({
+            "content-type": result.ContentType,
+            "content-length": result.ContentLength,
+        });
+
+        stream.pipe(res);
     } catch (err: any) {
         console.error(err);
         res.status(400).json({
@@ -204,43 +206,6 @@ router.get(
 );
 
 /**
- * @put
- *      PUT request to mark video as viewed by the user
- */
-router.put(
-    "/viewVideo",
-    requireAuth,
-    checkVideoExists,
-    async (req: PeekoRequest, res) => {
-        // destructure
-        const videoKey = (req.resource as VideoType).videoKey;
-
-        try {
-            const update = await User.findByIdAndUpdate(req.currentUser!._id, {
-                $addToSet: { viewed: videoKey },
-            });
-
-            if (!update) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Failed to mark video as viewed",
-                });
-            }
-
-            res.status(200).json({
-                success: true,
-            });
-        } catch (err: any) {
-            console.error(err.message);
-            res.status(400).json({
-                success: false,
-                error: err.message,
-            });
-        }
-    }
-);
-
-/**
  * @delete
  *      DELETE request to delete a video from s3 and db
  */
@@ -268,6 +233,9 @@ router.delete(
 
             // delete video file from s3
             await s3_delete(videoKey);
+
+            // delete comments associated with video
+            await Comment.deleteMany({ videoKey });
 
             // return response
             res.status(200).json({
