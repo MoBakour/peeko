@@ -249,6 +249,12 @@ All changes applied on this project code base will be documented in this file.
     - Fixed deleting a video not deleting associated comments with it
     - Released the first beta version
 
+## [0.2.0-beta] - 2023-1-1
+
+### Changed
+
+    - Removed requireAuth from some routes to allow unauthenticated users to access some resources
+
 ## TODOS
 
     - [ ] Major testing (test all routes)

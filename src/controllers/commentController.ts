@@ -13,7 +13,7 @@ const router = express.Router();
  * @get
  *      GET request to get comments of a specific video through provided video id
  */
-router.get("/getComments/:videoKey", requireAuth, async (req, res) => {
+router.get("/getComments/:videoKey", async (req, res) => {
     // destructure
     const { videoKey } = req.params;
 
