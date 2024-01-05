@@ -2,15 +2,9 @@ import { Schema, model } from "mongoose";
 
 const commentSchema = new Schema(
     {
-        commentorId: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-        commentorUsername: {
-            type: String,
-            required: true,
-            trim: true,
+        commentor: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
         },
         comment: {
             type: String,

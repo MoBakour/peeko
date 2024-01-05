@@ -22,3 +22,25 @@ export const generateActivationCode = (): string => {
     const code = Math.floor(Math.random() * (max - min + 1)) + min;
     return code.toString();
 };
+
+export const replaceArrayWithCount = (
+    originalDocument: VideoType | VideoType[]
+): VideoType | VideoType[] => {
+    const newDocument = JSON.parse(JSON.stringify(originalDocument));
+
+    const replaceFunc = (doc: VideoType) => {
+        doc.likesCount = doc.likes?.length;
+        doc.viewsCount = doc.views?.length;
+        doc.likes = undefined;
+        doc.views = undefined;
+        return doc;
+    };
+
+    if (Array.isArray(newDocument)) {
+        newDocument.forEach(replaceFunc);
+    } else {
+        replaceFunc(newDocument);
+    }
+
+    return newDocument;
+};

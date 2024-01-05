@@ -4,7 +4,7 @@ import multer from "multer";
 
 // set multer upload
 export const upload = multer({
-    dest: "./uploads",
+    dest: "./uploads/",
     limits: {
         fileSize: 100 * 1024 * 1024,
     },
@@ -17,9 +17,15 @@ export const upload = multer({
 }).single("videoFile");
 
 // delete file function
-export const deleteFile = async (filePath: string) => {
+export const deleteFile = async (filePath: string | string[]) => {
     try {
-        await fs.promises.unlink(filePath);
+        if (typeof filePath === "string") {
+            await fs.promises.unlink(filePath);
+        } else if (Array.isArray(filePath)) {
+            for (const singlePath of filePath) {
+                await fs.promises.unlink(singlePath);
+            }
+        }
     } catch (err: any) {
         console.error(err);
     }

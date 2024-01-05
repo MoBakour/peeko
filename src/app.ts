@@ -36,7 +36,7 @@ const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
 const SERVER_PORT_STRING = process.env.port || process.env.PORT || "3000";
 const SERVER_PORT = parseInt(SERVER_PORT_STRING);
 
-const API_VERSION = "0.2.0-beta";
+const API_VERSION = "0.3.0-beta";
 
 // connect to db
 mongoose
@@ -75,5 +75,9 @@ app.get("/api-info", (req, res) => {
 
 // default (404) route
 app.use((req, res) => {
-    res.status(404).json({ success: false, error: "404 - UNDEFINED ROUTE" });
+    res.status(404).json({
+        success: false,
+        error: "404 - UNDEFINED ROUTE",
+        route: req.path,
+    });
 });

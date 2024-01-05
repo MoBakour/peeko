@@ -1,6 +1,5 @@
 // imports
 import express from "express";
-import { UserType, CommentType, PeekoRequest } from "../types";
 import Comment from "../models/comment";
 import Video from "../models/video";
 import { requireAuth } from "../middleware/authentication";
@@ -19,7 +18,12 @@ router.get("/getComments/:videoKey", async (req, res) => {
 
     try {
         // get comments
-        const commentDocuments = await Comment.find({ videoKey });
+        const commentDocuments = await Comment.find({ videoKey }).populate(
+            "commentor",
+            {
+                username: 1,
+            }
+        );
 
         // return response
         res.status(200).json({
@@ -42,7 +46,6 @@ router.get("/getComments/:videoKey", async (req, res) => {
 router.post("/postComment", requireAuth, async (req: PeekoRequest, res) => {
     // destructure
     const { videoKey, comment } = req.body;
-    const userObject = req.currentUser as UserType;
 
     try {
         // validate comment string
@@ -56,16 +59,16 @@ router.post("/postComment", requireAuth, async (req: PeekoRequest, res) => {
 
         // create comment structure
         const commentObject = {
-            commentorId: userObject._id,
-            commentorUsername: userObject.username,
+            commentor: req.currentUser!._id,
             comment,
             videoKey,
         };
 
         // post comment to db
-        const commentDocument: CommentType = await Comment.create(
-            commentObject
-        );
+        let commentDocument = await Comment.create(commentObject);
+        commentDocument = await commentDocument.populate("commentor", {
+            username: 1,
+        });
 
         // increment number of comments on video
         const updatedVideo = await Video.findOneAndUpdate(
@@ -122,7 +125,8 @@ router.delete(
 
             // if deleter is not commentor
             if (
-                commentDocument.commentorId !== req.currentUser!._id.toString()
+                commentDocument.commentor!.toString() !==
+                req.currentUser!._id.toString()
             ) {
                 return res.status(400).json({
                     success: false,
@@ -131,9 +135,17 @@ router.delete(
             }
 
             // delete comment from db
-            const deletedCommentDocument = await Comment.findByIdAndDelete(
+            let deletedCommentDocument = await Comment.findByIdAndDelete(
                 commentId
             );
+            if (deletedCommentDocument) {
+                deletedCommentDocument = await deletedCommentDocument.populate(
+                    "commentor",
+                    {
+                        username: 1,
+                    }
+                );
+            }
 
             // decrement the number of comments on a video
             const updatedVideo = await Video.findOneAndUpdate(

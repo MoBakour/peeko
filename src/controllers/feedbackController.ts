@@ -2,7 +2,6 @@
 import express from "express";
 import Video from "../models/video";
 import { requireAuth } from "../middleware/authentication";
-import { PeekoRequest, VideoType } from "../types";
 import { checkVideoExists } from "../middleware/checkResourceExists";
 
 // express router
@@ -23,7 +22,7 @@ router.put(
 
         try {
             // decide which operation to perform (like/unlike)
-            const alreadyLiked = videoDocument.likes.includes(userId);
+            const alreadyLiked = videoDocument.likes!.includes(userId);
             const updateOperation = alreadyLiked
                 ? { $pull: { likes: userId } }
                 : { $addToSet: { likes: userId } };

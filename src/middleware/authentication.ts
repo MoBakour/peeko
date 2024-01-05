@@ -1,7 +1,6 @@
 // imports
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { Response, NextFunction } from "express";
-import { PeekoRequest } from "../types";
 import User from "../models/user";
 
 // token secret key

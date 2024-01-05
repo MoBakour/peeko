@@ -4,17 +4,33 @@ import mongoose from "mongoose";
 import requestIp from "request-ip";
 import bcrypt from "bcrypt";
 import cron from "node-cron";
-import User from "../models/user";
-import { UserObjectType, UserType, PeekoRequest } from "../types";
+
 import { createToken, requireAuth } from "../middleware/authentication";
 import { validateUser } from "../utils/validation";
-import { generateActivationCode, formatTime } from "../utils/utils";
+import {
+    generateActivationCode,
+    formatTime,
+    replaceArrayWithCount,
+} from "../utils/utils";
 import sendEmail from "../utils/mailer";
+
+import User from "../models/user";
+import Comment from "../models/comment";
+import Video from "../models/video";
+import { s3_delete } from "../utils/s3";
+
+import { thumbnailSuffix } from "./videoController";
 
 // create router
 const router = express.Router();
 
-// variables
+/**
+ * The following functions is used to generate options for res.cookie function
+ * which would be used to set the auth token in the client's secure cookies
+ *
+ * This function doesn't seem to be in use currenty
+ * but I will keep it just in case :)
+ */
 const tokenCookieOptions = (maxAge: number = 60 * 60 * 24 * 14) => {
     return {
         maxAge,
@@ -162,9 +178,17 @@ router.post("/signIn", async (req, res) => {
 
     try {
         // try to find user
-        const userDocument: UserType | null = await User.findOne({
-            $or: [{ username: credential }, { email: credential }],
-        });
+        const userDocument: UserType | null = await User.findOne(
+            {
+                $or: [{ username: credential }, { email: credential }],
+            },
+            {
+                deviceInfo: 0,
+                activation: {
+                    activationCode: 0,
+                },
+            }
+        );
 
         // if not found
         if (!userDocument) {
@@ -183,11 +207,8 @@ router.post("/signIn", async (req, res) => {
             });
         }
 
-        // remove unwanted properties
+        // remove password before forwarding to client
         userDocument.password = undefined;
-        userDocument.deviceInfo = undefined;
-        userDocument.activation!.activationCode = undefined;
-        userDocument.viewed = undefined;
 
         // create & set token
         const token = await createToken(userDocument._id.toString());
@@ -197,6 +218,104 @@ router.post("/signIn", async (req, res) => {
             success: true,
             userDocument,
             token: token,
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
+        });
+    }
+});
+
+/**
+ * @get
+ *      GET request to get user data
+ */
+router.get("/getUser/:username", async (req: PeekoRequest, res) => {
+    const username = req.params.username;
+
+    // make sure request contains username in the params
+    if (!username) {
+        return res.status(400).json({
+            success: false,
+            error: "Username required as a param in the request URL",
+        });
+    }
+
+    try {
+        // get user document
+        const userDocument = await User.findOne(
+            { username },
+            {
+                email: 0,
+                password: 0,
+                deviceInfo: 0,
+                activation: 0,
+            }
+        );
+
+        // verify user existence
+        if (!userDocument) {
+            return res.status(400).json({
+                success: false,
+                error: "User not found",
+            });
+        }
+
+        // get videos posted by user
+        const videoDocuments = await Video.aggregate([
+            {
+                $lookup: {
+                    from: User.collection.name,
+                    localField: "uploader",
+                    foreignField: "_id",
+                    as: "uploader",
+                },
+            },
+            { $unwind: "$uploader" },
+            {
+                $match: {
+                    "uploader.username": username,
+                },
+            },
+            {
+                $sort: {
+                    createdAt: -1,
+                },
+            },
+            {
+                $project: {
+                    uploader: {
+                        _id: 1,
+                        username: 1,
+                    },
+                    videoKey: 1,
+                    likes: 1,
+                    views: 1,
+                    commentsCount: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                },
+            },
+        ]);
+
+        // get total likes & views on user videos
+        let totalLikes = 0;
+        let totalViews = 0;
+
+        videoDocuments.forEach((doc) => {
+            totalLikes += doc.likes.length;
+            totalViews += doc.views.length;
+        });
+
+        // return response
+        res.status(200).json({
+            success: true,
+            userDocument,
+            videoDocuments: replaceArrayWithCount(videoDocuments),
+            totalLikes,
+            totalViews,
         });
     } catch (err: any) {
         console.error(err);
@@ -218,7 +337,15 @@ router.delete("/deleteAccount", requireAuth, async (req: PeekoRequest, res) => {
     try {
         // delete user
         const deletedUserDocument: UserType | null =
-            await User.findByIdAndDelete(userId);
+            await User.findByIdAndDelete(userId, {
+                projection: {
+                    password: 0,
+                    deviceInfo: 0,
+                    activation: {
+                        activationCode: 0,
+                    },
+                },
+            });
 
         // if user not found
         if (!deletedUserDocument) {
@@ -228,11 +355,37 @@ router.delete("/deleteAccount", requireAuth, async (req: PeekoRequest, res) => {
             });
         }
 
-        // remove unwanted properties
-        deletedUserDocument.password = undefined;
-        deletedUserDocument.deviceInfo = undefined;
-        deletedUserDocument.activation!.activationCode = undefined;
-        deletedUserDocument.viewed = undefined;
+        // find videos posted by the user
+        const videoDocuments: VideoType[] = await Video.find({
+            uploader: userId,
+        });
+
+        // get arrays of associated video and thumbnail file keys
+        const videoKeys = [];
+        const thumbnailKeys = [];
+        for (const document of videoDocuments) {
+            videoKeys.push(document.videoKey);
+            thumbnailKeys.push(document.videoKey + thumbnailSuffix);
+        }
+
+        // delete user data & files
+        const promises = [
+            Comment.deleteMany({
+                $or: [{ commentor: userId }, { videoKey: { $in: videoKeys } }],
+            }),
+            Video.deleteMany({ uploader: userId }),
+            Video.updateMany(
+                {
+                    likes: userId,
+                },
+                {
+                    $pull: { likes: userId },
+                }
+            ),
+            s3_delete(videoKeys.concat(thumbnailKeys)),
+        ];
+
+        await Promise.all(promises);
 
         // return response
         res.status(200).json({
@@ -257,7 +410,7 @@ router.put("/activateAccount", async (req: PeekoRequest, res) => {
     if (!req.currentUser) {
         return res.status(400).json({
             success: false,
-            error: "Account not found",
+            error: "User not found",
         });
     }
 

@@ -255,6 +255,28 @@ All changes applied on this project code base will be documented in this file.
 
     - Removed requireAuth from some routes to allow unauthenticated users to access some resources
 
+## [0.3.0-beta] - 2023-1-5
+
+### Added
+
+    - Added thumbnails
+    - Added /user/getUser/:username to get user data and videos posted by user
+
+### Changed
+
+    - Declared typescript types globally to not have to import them everywhere needed
+    - When deleting user account, all associated comments, likes, and videos on the DB and the cloud are deleted
+    - Improved error handling accross the server code
+    - Improved deleteFile and s3_delete functions to handle deleting single or multiple resources
+
+    - Used mongoose refs and population features to improve data manipulation
+    - Renamed and repositioned s3 and multer operation files to a more suitable name and location
+    - Made views bound to videos instead of being bound to users
+    - Made views count per client visit instead of per account visit
+
+    - Instead of returning likes & views arrays, just return the length of them
+    - Fixed unrelated promises waiting for each other
+
 ## TODOS
 
     - [ ] Major testing (test all routes)

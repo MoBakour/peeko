@@ -1,6 +1,3 @@
-// imports
-import { UserObjectType } from "../types";
-
 // validation regexes
 const usernameRegex = /^[a-zA-Z0-9_ ]+$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

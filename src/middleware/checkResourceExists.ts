@@ -1,6 +1,5 @@
 // imports
 import { Response, NextFunction } from "express";
-import { PeekoRequest, VideoType } from "../types";
 import Video from "../models/video";
 
 // check if video exists in the database
@@ -14,13 +13,15 @@ export const checkVideoExists = async (
 
     try {
         // get video
-        const video: VideoType | null = await Video.findOne({ videoKey });
+        const video: VideoType | null = await Video.findOne({
+            videoKey,
+        }).populate("uploader", { username: 1 });
 
         // if video does not exist
         if (!video) {
             return res.status(400).json({
                 success: false,
-                error: "video not found",
+                error: "Video not found",
             });
         }
 

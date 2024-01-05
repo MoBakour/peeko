@@ -2,15 +2,9 @@ import { Schema, model } from "mongoose";
 
 const videoSchema = new Schema(
     {
-        uploaderId: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-        uploaderUsername: {
-            type: String,
-            required: true,
-            trim: true,
+        uploader: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
         },
         videoKey: {
             type: String,
@@ -19,6 +13,10 @@ const videoSchema = new Schema(
             trim: true,
         },
         likes: {
+            type: [String],
+            default: [],
+        },
+        views: {
             type: [String],
             default: [],
         },
