@@ -66,27 +66,15 @@
 
 ## Endpoints Map
 
-[POST] /user/register
-[POST] /user/signIn
-[GET] /user/get/:username
-[PUT] /user/activate
-[PUT] /user/updateIpAddress
-[DELETE] /user/delete
+##### User Endpoints
 
-[POST] /video/upload
-[GET] /video/streamVideo/:key
-[GET] /video/streamThumbnail/:key
-[GET] /video/get/:key
-[GET] /video/getVideos/:count?
-[DELETE] /video/delete/:key
+[POST] /user/register<br />[POST] /user/signIn<br />[GET] /user/get/:username<br />[PUT] /user/activate<br />[PUT] /user/updateIpAddress<br />[DELETE] /user/delete
 
-[POST] /comment/post
-[GET] /comment/getComments/:key
-[DELETE] /comment/delete/:id
+[POST] /video/upload<br />[GET] /video/streamVideo/:key<br />[GET] /video/streamThumbnail/:key<br />[GET] /video/get/:key<br />[GET] /video/getVideos/:count?<br />[DELETE] /video/delete/:key
 
-[PUT] /feedback/toggle/:key
-[PUT] /feedback/like/:key
-[PUT] /feedback/unlike/:key
+[POST] /comment/post<br />[GET] /comment/getComments/:key<br />[DELETE] /comment/delete/:id
+
+[PUT] /feedback/toggle/:key<br />[PUT] /feedback/like/:key<br />[PUT] /feedback/unlike/:key
 
 ## User Endpoints
 
@@ -391,6 +379,12 @@ Users are given 10 minutes to activate their account under the specified attempt
         ```
 
 #### - [GET] &emsp; /video/getVideos/:count?
+
+This endpoints returns a response with a `videoDocuments` object containing a list of videos
+
+The optional `count` parameter in the URL determines the maximum number of fetched video documents. If it was not specified, a maximum of 10 video documents will be returned by default
+
+The priority of choice of videos will be for the unwatched videos by the user. If no unwatched videos were found, then watched videos will be returned
 
 -   Response body
 
