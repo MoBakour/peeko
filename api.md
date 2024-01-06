@@ -1,38 +1,14 @@
-# API Definition & Usage
+# API Defintion & Usage
 
-## Database Models
+## Data Models
 
 #### User Model
 
-```js
-UserObject = {
-    _id: {
-        type: ObjectId,
-        unique: true,
-        autoAssigned: true,
-    },
-    username: {
-        type: String,
-        unique: true,
-        required: true,
-        maxLength: 24,
-        trim: true,
-        validationRegex: /^[a-zA-Z0-9_ ]+$/,
-    },
-    email: {
-        type: String,
-        trim: true,
-        required: false,
-        maxLength: 320,
-        validationRegex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    },
-    password: {
-        type: String,
-        trim: true,
-        required: false,
-        minLength: 6,
-        maxLength: 300,
-    },
+```ts
+{
+    _id: String,
+    username: String,
+    email: String,
     deviceInfo: {
         fingerprint: String,
         brand: String,
@@ -41,706 +17,556 @@ UserObject = {
         ipAddress: String,
         abi: {
             abiArc: String,
-            supportedAbis: String,
-        },
+            supportedAbis: String
+        }
     },
-    createdAt: {
-        type: Date,
-        autoAssigned: true,
+    activation: {
+        activated: Boolean,
+        attemptsLeft: Number,
+        blocked: Boolean
     },
-    updatedAt: {
-        type: Date,
-        autoAssigned: true,
-    },
-};
+    createdAt: Date,
+    updatedAt: Date
+}
 ```
 
 #### Video Model
 
-```js
-VideoObject = {
-    _id: {
-        type: ObjectId,
-        required: true,
-        unique: true,
-        autoAssigned: true,
+```ts
+{
+    _id: String,
+    uploader: {
+        _id: String,
+        username: String
     },
-    uploaderId: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    uploaderUsername: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    videoKey: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true
-    },
-    likes: {
-        type: String[],
-        default: []
-    },
-    commentsCount: {
-        type: Number,
-        default: 0
-    },
-    createdAt: {
-        type: Date,
-        autoAssigned: true
-    },
-    updatedAt: {
-        type: Date,
-        autoAssigned: true
-    }
-};
+    videoKey: String,
+    likesCount: Number,
+    viewsCount: Number,
+    commentsCount: Number,
+    createdAt: Date,
+    updatedAt: Date
+}
 ```
 
 #### Comment Model
 
-```js
-CommentObject = {
-    _id: {
-        type: ObjectId,
-        required: true,
-        unique: true,
-        autoAssigned: true,
+```ts
+{
+    _id: String,
+    commentor: {
+        _id: String,
+        username: String
     },
-    commentorId: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    commentorUsername: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    comment: {
-        type: String,
-        required: true,
-        maxLength: 300,
-        trim: true,
-    },
-    videoKey: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    createdAt: {
-        type: Date,
-        autoAssigned: true,
-    },
-    updatedAt: {
-        type: Date,
-        autoAssigned: true,
-    },
-};
+    comment: String,
+    videoKey: String,
+    createdAt: Date,
+    updatedAt: Date
+}
 ```
+
+## Endpoints Map
+
+[POST] /user/register
+[POST] /user/signIn
+[GET] /user/get/:username
+[PUT] /user/activate
+[PUT] /user/updateIpAddress
+[DELETE] /user/delete
+
+[POST] /video/upload
+[GET] /video/streamVideo/:key
+[GET] /video/streamThumbnail/:key
+[GET] /video/get/:key
+[GET] /video/getVideos/:count?
+[DELETE] /video/delete/:key
+
+[POST] /comment/post
+[GET] /comment/getComments/:key
+[DELETE] /comment/delete/:id
+
+[PUT] /feedback/toggle/:key
+[PUT] /feedback/like/:key
+[PUT] /feedback/unlike/:key
 
 ## User Endpoints
 
-#### - [POST] /user/register
+#### - [POST] &emsp; /user/register
 
-This route requests creating a new user account.
+##### About the token
 
-A response with the userDocument and the token will be returned, the token should be stored on the client side. If the client was a web app, store the token in the cookies. If the client was a mobile app, store the token in the appropriate method and location, away, secured, and hidden from the user or any other third-party accessors.
+After successful registration, in the response body there will be provided a `token` value. This token should be stored in the client-side and then provided on every future request to authenticate the user
 
-After the account is created it needs to be activated with an activation code sent to the user email that was used for registration. No feature or route will be accessible by any unactivated account. Activation details will be discussed in /user/activateAccount endopint documentation section.
+In future authenticated requests, the token must be provided in the request's `Authorization` header as a string in the following form `Bearer {token}`
 
-With the request body, a special field (`devActivation`) can be passed with two sub-fields, `password` and `autoActivate`. This field can be used by developers only for development and testing purposes. A password is supplied to verify that the option is being used by a developer. The `autoActivation` field takes a boolean which specifies if an activation is required for this account or not. If the field was set to true, then no activation code will be required nor sent to the user email. But if the field was set to false, then the activation code will be required and sent to the user email, and also returned with the registration request under `activationCode` field for the developer.
+##### About the user activation
 
-Expected **_JSON Request Body_**:
+After successful registration, the user account will not yet be activated. An unactivated user will still not be able to perform user actions such as commenting, liking, or posting videos
 
--   `username` (string) a new username of the account, will be visible by other users.
-    -   Must be unique across the app
-    -   Maximum length is 24 characters
-    -   Must not start or end with a space character
-    -   Must only include letters, numbers, underscores, and spaces
--   `email` (string) the email address of the user
-    -   Must be unique across the app
-    -   Maximum length is 320 characters
--   `password` (string) a new user account password
-    -   Minimum length is 6 characters
-    -   Maximum length is 300 characters
-    -   Must not start or end with a space character
--   `client` (string) the client that the user is using
-    -   Must be one of two: "web" or "mobile"
-    -   Case insensitive
--   `deviceInfo` (object) an optional object that contains device information, all fields are optional and can be omitted. It follows the following schema:
-    ```js
+Upon successful registration, the user will receive the activation code via his email that he provided during the registration process, using this activation code, user will be able to activate their account through the /user/activate endpoint
+
+More about the activation process found in /user/activation description
+
+-   Request body
+
+    ```ts
     {
-        fingerprint: String,
-        brand: String,
-        model: String,
-        osVersion: String,
-        abi: {
-            abiArc: String,
-            supportedAbis: String,
-        },
-    }
-    ```
--   `devActivation` (object) an optional object (only for developers) It follows the following schema:
-    ```js
-    {
+        username: String,
+        email: String,
         password: String,
-        autoActivate: Boolean
+        deviceInfo?: Object,
+        devActivation?: {
+            password: String,
+            autoActivate: Boolean
+        }
     }
     ```
 
-Expected Response JSON Objects:
+-   Response body
 
--   Success:
+    -   Success <code: 200>
 
-    ```js
+        ```ts
+        {
+            success: true,
+            userDocument: UserDocument,
+            token: String
+        }
+        ```
+
+    -   Failure <code: 400>
+
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
+
+#### - [POST] &emsp; /user/signIn
+
+In the request body there must be a `credential` field provided, this credential field must represent the username or the email of the user
+
+-   Request body
+
+    ```ts
     {
-        success: true,
-        userDocument: UserDocument, // an object with the user information
+        credential: String,
+        password: String
     }
     ```
 
--   Success (mobile):
+-   Response body
 
-    ```js
+    -   Success <code: 200>
+
+        ```ts
+        {
+            success: true,
+            userDocument: UserDocument,
+            token: String
+        }
+        ```
+
+    -   Failure <code: 400>
+
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
+
+#### - [GET] &emsp; /user/get/:username
+
+-   Response body
+
+    -   Success <code: 200>
+
+        ```ts
+        {
+            success: true,
+            userDocument: UserDocument,
+            videoDocuments: VideoDocument[],
+            totalLikes: Number,
+            totalViews: Number
+        }
+        ```
+
+    -   Failure <code: 400>
+
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
+
+#### - [PUT] &emsp; /user/activate
+
+##### Activation Rules and Limits
+
+Users are given a limit of 5 activation attempts. If exceeded, the user will not be activated and will be blocked from activating their account and from creating a new account with the same username and/or email address for 24 hours
+
+Users are given 10 minutes to activate their account under the specified attempt limit. If 10 minutes have passed and account was not yet activated, then the account will be deleted from the system database and user will have to repeat registration process
+
+-   Reuqest body
+
+    ```ts
     {
-        success: true,
-        userDocument: UserDocument, // an object with the user information
-        token: string // (only for mobile) an authorization token to be stored at the mobile client
+        activationCode: String,
     }
     ```
 
--   Success (dev autoActivate: false):
+-   Response body
 
-    ```js
-    {
-        success: true,
-        userDocument: UserDocument, // an object with the user information
-        activationCode: String
-    }
-    ```
+    -   Success <code: 200>
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+        ```ts
+        {
+            success: true;
+        }
+        ```
 
-#### - [POST] /user/signIn
+    -   Failure <code: 400> (activation error)
 
-This route requests a new token to be returned for mobile clients to store it, or stored in cookies for web clients.
-The token can be used to send authenticated requests to the API.
+        ```ts
+        {
+            success: false,
+            error: String,
+            attemptsLeft: Number
+        }
+        ```
 
-Expected **_JSON Request Body_**:
+    -   Failure <code: 400> (server error)
 
--   `credential` (string) the username or email of the user account
--   `password` (string) the password of the user account
--   `client` (string) the client that the user is using
-    -   Must be one of two: "web" or "mobile"
-    -   Case insensitive
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-Expected Response JSON Objects:
+#### - [PUT] &emsp; /user/updateIpAddress
 
--   Success:
+-   Response body
 
-    ```js
-    {
-        success: true,
-        userDocument: UserDocument, // an object with the user information
-    }
-    ```
+    -   Success <code: 200>
 
--   Success (mobile):
+        ```ts
+        {
+            success: true,
+            ipAddress: String | null
+        }
+        ```
 
-    ```js
-    {
-        success: true,
-        userDocument: UserDocument, // an object with the user information
-        token: string // (only for mobile) an authorization token to be stored at the mobile client
-    }
-    ```
+    -   Failure <code: 400>
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-#### - [POST] /user/signOut
+#### - [DELETE] &emsp; /user/delete
 
-A route requests signing out of the user account. This route is only for web clients, where the server handles removing the token from the user cookies. Mobile clients should handle sign out operations on the client-side, where they delete the token from storage.
+-   Response body
 
-Expected **_JSON Request Body_**:
+    -   Success <code: 200>
 
--   `client` (string) the client that the user is using
-    -   Must be one of two: "web" or "mobile"
-    -   Case insensitive
+        ```ts
+        {
+            success: true,
+            deletedUserDocument: UserDocument
+        }
+        ```
 
-Expected Response JSON Objects:
+    -   Failure <code: 400>
 
--   Success:
-
-    ```js
-    {
-        success: true;
-    }
-    ```
-
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
-
-#### - [PUT] /user/activateAccount
-
-This route requests the activation of a new unactivated account.
-
-When a new account is created with /user/register. It is set to be unactivated. Activation code will be sent ot the user email. Activation should be done within 10 minutes after registering. If the user fails to activate the account in 10 minutes, it will be deleted. The user is given a maximum of 5 activation attempts. If all attempts were used unsuccessfully, then the account will be blocked from activation for 24 hours, and the username and email address of the account will be blocked from registering for 24 hours as well.
-
-Expected **_JSON Request Body_**:
-
--   `activationCode` (string) the account activation code, sent to user's email
-
-Expected Response JSON Objects:
-
--   Success:
-
-    ```js
-    {
-        success: true,
-    }
-    ```
-
--   Failure (Invalid Code):
-
-    ```js
-    {
-        success: false,
-        error: String,
-        attemptsLeft: Number
-    }
-    ```
-
--   Failure:
-
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
-
-#### - [DELETE] /user/deleteAccount
-
-This route deletes an existing user profile/account.
-
-A delete operation to the user account will be attempted. If succeeded, the deleted user object will be returned with the response, otherwise, a failure response will be sent.
-
-Expected Response JSON Objects:
-
--   Success:
-
-    ```js
-    {
-        success: true,
-        deletedUserDocument: UserDocument // the deleted user document
-    }
-    ```
-
--   Failure:
-
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
-
-#### - [PUT] /user/updateIpAddress
-
-This route pings the server to update the IP address of the current user.
-No params or request body is expected for this request, as it just pings the server. The server handles getting the IP address and updating it in the database.
-Being registered into the app with a user account and having the authorization token attached to the request headers (mobile client) or the cookies (web client) is sufficient.
-
-Expected Response JSON Objects:
-
--   Success:
-
-    ```js
-    {
-        success: true,
-        ipAddress: String
-    }
-    ```
-
--   Failure:
-
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
 ## Video Endpoints
 
-#### - [POST] /video/uploadVideo
+#### - [POST] &emsp; /video/upload
 
-This route uploads a video to the server, the response object contains the video object (information about the video) which includes the video key.
+-   Request body
 
-Expected **_JSON Request Body_**:
-
--   `videoFile` (File) the posted video file
-    -   File must be of video mimetype
-    -   Max video file size is 100 megabytes
-    -   Max video duration is 5 minutes
-
-Expected Response JSON Objects:
-
--   Success:
-
-    ```js
+    ```ts
     {
-        success: true,
-        videoDocument: VideoDocument // an object with the video information
+        videoFile: File<Video>;
     }
     ```
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+-   Response body
 
-#### - [GET] /video/streamVideo/<span style="color:red">{{ videoKey }}</span>
+    -   Success <code: 200>
 
-This route gets a video file from the server. (It gets the video itself only and not the video data).
+        ```ts
+        {
+            success: true,
+            videoDocument: VideoDocument
+        }
+        ```
 
-In this route, no json response is going to be sent from the server, but a video file will be streamed down to the client from the server.
+    -   Failure <code: 400>
 
-Expected **_URL Parameters_**
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
--   `videoKey`: the video key to identify the video targeted for streaming
+#### - [GET] &emsp; /video/streamVideo/:key
 
-Expected **_Response_**:
+-   Response body
 
--   Success:
-    In case of a success. The response is a a readable video file stream to be displayed in the client-side.
+    -   Success <code: 200>
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+        **_video stream_**
 
-#### - [GET] /getVideo/<span style="color:red">{{ videoKey }}</span>
+    -   Failure <code: 400> (server error)
 
-This route gets a single video information. Video key should be supplied in the request URL parameters to identify the video to get.
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-Expected **_URL Parameters_**
+#### - [GET] &emsp; /video/streamThumbnail/:key
 
--   `videoKey`: the video key to identify the video targeted for getting
+-   Response body
 
-Expected Response JSON Objects:
+    -   Success <code: 200>
 
--   Success:
+        **_image stream_**
 
-    ```js
-    {
-        success: true,
-        videoDocument: VideoDocument // an object with the video information
-    }
-    ```
+    -   Failure <code: 400> (server error)
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-#### - [POST] /video/getVideos
+#### - [GET] &emsp; /video/get/:key
 
-This route gets an array of video documents. Video documents are selected randomly and previously viewed videos are excluded from the selection.
+-   Response body
 
-The number of video documents returned is decided by the `count` option passed in the request body, and if not passed, it defaults to 10.
+    -   Success <code: 200>
 
-Another option that can be passed in the request body is the `viewed` option, which is an array that contains keys to be excluded in the selection process. Previously watched videos by the client should be included in the viewed array for next requests so that the user does not get the same videos over and over again.
+        ```ts
+        {
+            success: true,
+            videoDocument: VideoDocument,
+            isLiked: boolean
+        }
+        ```
 
-Expected **_JSON Request Body_**:
+    -   Failure <code: 400>
 
--   `count` (integer) (optional, default is 10)
--   `viewed` (string[]) (optional, default is []) an array of strings, each string is the key of a previously viewed video
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-Expected Response JSON Objects:
+#### - [GET] &emsp; /video/getVideos/:count?
 
--   Success:
+-   Response body
 
-    ```js
-    {
-        success: true,
-        videoDocuments: VideoDocument[] // an array of video documents
-    }
-    ```
+    -   Success <code: 200>
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+        ```ts
+        {
+            success: true,
+            videoDocuments: VideoDocument[]
+        }
+        ```
 
-#### - [DELETE] /video/deleteVideo/<span style="color:red">{{ videoKey }}</span>
+    -   Failure <code: 400>
 
-This route deletes a video with the provided key.
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-A delete operation will be attempted on the video. If the operation succeeds, a video document will be sent with the response, otherwise, a failure response will be sent.
+#### - [DELETE] &emsp; /video/delete/:key
 
-Expected **_URL Parameters_**
+-   Response body
 
--   `videoKey`: the video key of the video targeted for delete operation
+    -   Success <code: 200>
 
-Expected Response JSON Objects:
+        ```ts
+        {
+            success: true,
+            deletedVideoDocument: VideoDocument
+        }
+        ```
 
--   Success:
+    -   Failure <code: 400>
 
-    ```js
-    {
-        success: true,
-        deletedVideoDocument: VideoDocument // the video document that was deleted
-    }
-    ```
-
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
 ## Comment Endpoints
 
-#### - [GET] /comment/getComments/<span style="color:red">{{ videoKey }}</span>
+#### - [POST] &emsp; /comment/post
 
-This route gets all the comments of a specific video post.
+-   Request body
 
-If the video was found, all comments associated with it will be sent down to the client. Otherwise, a failure response will be sent.
-
-Expected **_Query Parameters_**:
-
--   `videoKey`: the video key to get the comments associated with the video post
-
-Expected Response JSON Objects:
-
--   Success:
-
-    ```js
+    ```ts
     {
-        success: true,
-        commentDocuments: CommentDocument[] // an array of comment documents
+        videoKey: String,
+        comment: String
     }
     ```
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+-   Response body
 
-#### - [POST] /comment/postComment
+    -   Success <code: 200>
 
-This route is to post a comment on a video.
+        ```ts
+        {
+            success: true,
+            commentDocument: CommentDocument,
+            newCommentsCount: Number
+        }
+        ```
 
-If the video was found with the provided video key, a comment will be attached to it.
+    -   Failure <code: 400>
 
-Expected **_JSON Request Body_**:
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
--   `videoKey` (string) the key to the video to attach the comment
--   `comment` (string) the comment content
-    -   comment max length of 300 characters
+#### - [GET] &emsp; /comment/getComments/:key
 
-Expected Response JSON Objects:
+-   Response body
 
--   Success:
+    -   Success <code: 200>
 
-    ```js
-    {
-        success: true,
-        commentDocument: CommentDocument, // the posted comment object
-        newCommentsCount: Number // the new up-to-date number of comments after the new comment
-    }
-    ```
+        ```ts
+        {
+            success: true,
+            commentDocuments: CommentDocument[]
+        }
+        ```
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+    -   Failure <code: 400>
 
-#### - [DELETE] /comment/deleteComment/<span style="color:red">{{ commentId }}</span>
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-This route is to delete a comment from a video.
+#### - [DELETE] &emsp; /comment/delete/:id
 
-If a valid comment was found on a valid video, it will be deleted, otherwise, a failure response will be sent back.
+-   Response body
 
-Expected **_Query Parameters_**:
+    -   Success <code: 200>
 
--   `commentId`: the id of the comment to be deleted
+        ```ts
+        {
+            success: true,
+            deletedCommentDocument: CommentDocument,
+            newCommentsCount: Number
+        }
+        ```
 
-Expected Response JSON Objects:
+    -   Failure <code: 400>
 
--   Success:
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-    ```js
-    {
-        success: true,
-        deletedCommentDocument: CommentDocument, // the deleted comment object
-        newCommentsCount: Number // the new up-to-date number of comments after the deleted comment
-    }
-    ```
+#### - [PUT] &emsp; /feedback/toggle/:key
 
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+-   Response body
 
-## Feedback Endpoints
+    -   Success <code: 200>
 
-#### - [PUT] /feedback/toggleLike
+        ```ts
+        {
+            success: true,
+            newLikesCount: Number,
+            operation: "LIKE" | "UNLIKE"
+        }
+        ```
 
-This route toggles like on a video post.
+    -   Failure <code: 400>
 
-If a post was not found the process will be rejected.
-If the post was already liked by the user, the post will be unliked.
-If the post was not liked by the user, the post will be liked.
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-Expected **_JSON Request Body_**:
+#### - [PUT] &emsp; /feedback/like/:key
 
--   `videoKey` (string) the key of the video to toggle the like on
+-   Response body
 
-Expected Response JSON Objects:
+    -   Success <code: 200>
 
--   Success:
+        ```ts
+        {
+            success: true,
+            newLikesCount: Number,
+            operation: "LIKE"
+        }
+        ```
 
-    ```js
-    {
-        success: true,
-        likesCount: Number, // the new number of likes on the post (after the toggle action)
-        operation: String // either "LIKE" or "UNLIKE"
-    }
-    ```
+    -   Failure <code: 400>
 
--   Failure:
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```
 
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+#### - [PUT] &emsp; /feedback/unlike/:key
 
-#### - [PUT] /feedback/likeVideo
+-   Response body
 
-This route adds a new like to a video post.
+    -   Success <code: 200>
 
-If the post was not found, the process will be rejected.
-If a like already exists on the post by the same user, the process will be rejected.
+        ```ts
+        {
+            success: true,
+            newLikesCount: Number,
+            operation: "UNLIKE"
+        }
+        ```
 
-Expected **_JSON Request Body_**:
+    -   Failure <code: 400>
 
--   `videoKey` (string) the key of the video to add the like on
-
-Expected Response JSON Objects:
-
--   Success:
-
-    ```js
-    {
-        success: true,
-        likesCount: Number, // the new number of likes on the post (after the like action)
-        operation: "LIKE"
-    }
-    ```
-
--   Failure (Already Liked Post):
-
-    ```js
-    {
-        success: false,
-        likesCount: Number // the number of likes on the post (update not included since it did not happen)
-        error: String<invalidFeedbackOperationErrorMsg_LIKE>
-    }
-    ```
-
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
-
-#### - [PUT] /feedback/unlikeVideo
-
-This route removes a like from a video post.
-
-If the post was not found, the process will be rejected.
-If the post was not even liked, the process will be rejected.
-
-Expected **_JSON Request Body_**:
-
--   `videoKey` (string) the key of the video to add the like on
-
-Expected Response JSON Objects:
-
--   Success:
-
-    ```js
-    {
-        success: true,
-        likesCount: Number, // the new number of likes on the post (after the unlike action)
-        operation: "UNLIKE"
-    }
-    ```
-
--   Failure (Already unliked Post):
-
-    ```js
-    {
-        success: false,
-        likesCount: Number // the number of likes on the post (update not included since it did not happen)
-        error: String<invalidFeedbackOperationErrorMsg_UNLIKE>
-    }
-    ```
-
--   Failure:
-    ```js
-    {
-        success: false,
-        error: String
-    }
-    ```
+        ```ts
+        {
+            success: false,
+            error: String
+        }
+        ```

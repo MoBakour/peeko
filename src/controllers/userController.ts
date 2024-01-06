@@ -232,7 +232,7 @@ router.post("/signIn", async (req, res) => {
  * @get
  *      GET request to get user data
  */
-router.get("/getUser/:username", async (req: PeekoRequest, res) => {
+router.get("/get/:username", async (req: PeekoRequest, res) => {
     const username = req.params.username;
 
     // make sure request contains username in the params
@@ -327,85 +327,10 @@ router.get("/getUser/:username", async (req: PeekoRequest, res) => {
 });
 
 /**
- * @delete
- *      DELETE request to delete a user from the db
- */
-router.delete("/deleteAccount", requireAuth, async (req: PeekoRequest, res) => {
-    // destructure
-    const userId = req.currentUser!._id;
-
-    try {
-        // delete user
-        const deletedUserDocument: UserType | null =
-            await User.findByIdAndDelete(userId, {
-                projection: {
-                    password: 0,
-                    deviceInfo: 0,
-                    activation: {
-                        activationCode: 0,
-                    },
-                },
-            });
-
-        // if user not found
-        if (!deletedUserDocument) {
-            return res.status(400).json({
-                success: false,
-                error: "User not found",
-            });
-        }
-
-        // find videos posted by the user
-        const videoDocuments: VideoType[] = await Video.find({
-            uploader: userId,
-        });
-
-        // get arrays of associated video and thumbnail file keys
-        const videoKeys = [];
-        const thumbnailKeys = [];
-        for (const document of videoDocuments) {
-            videoKeys.push(document.videoKey);
-            thumbnailKeys.push(document.videoKey + thumbnailSuffix);
-        }
-
-        // delete user data & files
-        const promises = [
-            Comment.deleteMany({
-                $or: [{ commentor: userId }, { videoKey: { $in: videoKeys } }],
-            }),
-            Video.deleteMany({ uploader: userId }),
-            Video.updateMany(
-                {
-                    likes: userId,
-                },
-                {
-                    $pull: { likes: userId },
-                }
-            ),
-            s3_delete(videoKeys.concat(thumbnailKeys)),
-        ];
-
-        await Promise.all(promises);
-
-        // return response
-        res.status(200).json({
-            success: true,
-            deletedUserDocument,
-        });
-    } catch (err: any) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err.message,
-        });
-    }
-});
-
-/**
  * @put
  *      PUT request to activate unactivated account
  */
-router.put("/activateAccount", async (req: PeekoRequest, res) => {
+router.put("/activate", async (req: PeekoRequest, res) => {
     // check user attached
     if (!req.currentUser) {
         return res.status(400).json({
@@ -517,6 +442,81 @@ router.put("/updateIpAddress", requireAuth, async (req: PeekoRequest, res) => {
         res.status(200).json({
             success: true,
             ipAddress,
+        });
+    } catch (err: any) {
+        console.error(err);
+        res.status(400).json({
+            success: false,
+            error: err.message,
+        });
+    }
+});
+
+/**
+ * @delete
+ *      DELETE request to delete a user from the db
+ */
+router.delete("/delete", requireAuth, async (req: PeekoRequest, res) => {
+    // destructure
+    const userId = req.currentUser!._id;
+
+    try {
+        // delete user
+        const deletedUserDocument: UserType | null =
+            await User.findByIdAndDelete(userId, {
+                projection: {
+                    password: 0,
+                    deviceInfo: 0,
+                    activation: {
+                        activationCode: 0,
+                    },
+                },
+            });
+
+        // if user not found
+        if (!deletedUserDocument) {
+            return res.status(400).json({
+                success: false,
+                error: "User not found",
+            });
+        }
+
+        // find videos posted by the user
+        const videoDocuments: VideoType[] = await Video.find({
+            uploader: userId,
+        });
+
+        // get arrays of associated video and thumbnail file keys
+        const videoKeys = [];
+        const thumbnailKeys = [];
+        for (const document of videoDocuments) {
+            videoKeys.push(document.videoKey);
+            thumbnailKeys.push(document.videoKey + thumbnailSuffix);
+        }
+
+        // delete user data & files
+        const promises = [
+            Comment.deleteMany({
+                $or: [{ commentor: userId }, { videoKey: { $in: videoKeys } }],
+            }),
+            Video.deleteMany({ uploader: userId }),
+            Video.updateMany(
+                {
+                    likes: userId,
+                },
+                {
+                    $pull: { likes: userId },
+                }
+            ),
+            s3_delete(videoKeys.concat(thumbnailKeys)),
+        ];
+
+        await Promise.all(promises);
+
+        // return response
+        res.status(200).json({
+            success: true,
+            deletedUserDocument,
         });
     } catch (err: any) {
         console.error(err);

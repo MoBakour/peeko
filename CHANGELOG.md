@@ -277,6 +277,15 @@ All changes applied on this project code base will be documented in this file.
     - Instead of returning likes & views arrays, just return the length of them
     - Fixed unrelated promises waiting for each other
 
+## [0.3.1-beta] - 2023-1-6
+
+### Changed
+
+    - Changed API endpoints naming convention
+    - Changes likesCount to newLikesCount in feedback responses
+    - Improved /feedback/like and /feedback/unlike handlers
+    - Rewrote API description file API.md up-to-date
+
 ## TODOS
 
     - [ ] Major testing (test all routes)

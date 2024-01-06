@@ -24,7 +24,7 @@ export const thumbnailSuffix = "-thumbnail.png";
  * @post
  *      POST request to upload a video to s3 and db
  */
-router.post("/uploadVideo", requireAuth, async (req: PeekoRequest, res) => {
+router.post("/upload", requireAuth, async (req: PeekoRequest, res) => {
     upload(req, res, async (err) => {
         if (err instanceof MulterError && err.code === "LIMIT_FILE_SIZE") {
             return res.status(400).json({
@@ -160,7 +160,7 @@ router.get(
  *      GET request to get a specific video data through a provided video key
  */
 router.get(
-    "/getVideo/:videoKey",
+    "/get/:videoKey",
     checkVideoExists,
     async (req: PeekoRequest, res) => {
         try {
@@ -278,7 +278,7 @@ router.get("/getVideos/:count?", async (req: PeekoRequest, res) => {
  *      DELETE request to delete a video from s3 and db
  */
 router.delete(
-    "/deleteVideo/:videoKey",
+    "/delete/:videoKey",
     requireAuth,
     checkVideoExists,
     async (req: PeekoRequest, res) => {

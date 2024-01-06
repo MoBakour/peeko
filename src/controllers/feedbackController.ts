@@ -12,7 +12,7 @@ const router = express.Router();
  *      PUT request to toggle like on a video post
  */
 router.put(
-    "/toggleLike",
+    "/toggle/:videoKey",
     requireAuth,
     checkVideoExists,
     async (req: PeekoRequest, res) => {
@@ -37,7 +37,7 @@ router.put(
             // send back response
             res.status(200).json({
                 success: true,
-                likesCount: updatedDocument?.likes.length,
+                newLikesCount: updatedDocument?.likes.length,
                 operation: alreadyLiked ? "UNLIKE" : "LIKE",
             });
         } catch (err: any) {
@@ -54,99 +54,111 @@ router.put(
  * @put
  *      PUT request to like a video post
  */
-router.put("/likeVideo", requireAuth, async (req: PeekoRequest, res) => {
-    // destructure
-    const { videoKey } = req.body;
-    const userId = req.currentUser!._id;
+router.put(
+    "/like/:videoKey",
+    requireAuth,
+    checkVideoExists,
+    async (req: PeekoRequest, res) => {
+        // destructure
+        const userId = req.currentUser!._id;
+        const videoDocument = req.resource! as VideoType;
 
-    try {
-        // add userId to video likes array field in db
-        const preUpdatedDocument = await Video.findOneAndUpdate(
-            { videoKey },
-            { $addToSet: { likes: userId } },
-            { new: false }
-        );
+        try {
+            // add userId to video likes array field in db
+            const preUpdatedDocument = await Video.findOneAndUpdate(
+                { videoKey: videoDocument.videoKey },
+                {
+                    $addToSet: { likes: userId },
+                },
+                { new: false }
+            );
 
-        // if video not found
-        if (!preUpdatedDocument) {
-            return res.status(400).json({
+            // if video not found
+            if (!preUpdatedDocument) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Video not found",
+                });
+            }
+
+            // if userId was already in likes array
+            if (preUpdatedDocument.likes.includes(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    newLikesCount: preUpdatedDocument.likes.length,
+                    error: "Failed to like already liked video",
+                });
+            }
+
+            // return response
+            res.status(200).json({
+                success: true,
+                newLikesCount: preUpdatedDocument.likes.length + 1,
+                operation: "LIKE",
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(400).json({
                 success: false,
-                error: "Video not found",
+                error: err.message,
             });
         }
-
-        // if userId was already in likes array
-        if (preUpdatedDocument.likes.includes(userId)) {
-            return res.status(400).json({
-                success: false,
-                likesCount: preUpdatedDocument.likes.length,
-                error: "Invalid Feedback Operation Error: failed to like video post. reason: video was already liked",
-            });
-        }
-
-        // return response
-        res.status(200).json({
-            success: true,
-            likesCount: preUpdatedDocument.likes.length + 1,
-            operation: "LIKE",
-        });
-    } catch (err: any) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err.message,
-        });
     }
-});
+);
 
 /**
  * @put
  *      PUT request to remove like from a video post
  */
-router.put("/unlikeVideo", requireAuth, async (req: PeekoRequest, res) => {
-    // destructure
-    const { videoKey } = req.body;
-    const userId = req.currentUser!._id;
+router.put(
+    "/unlike/:videoKey",
+    requireAuth,
+    checkVideoExists,
+    async (req: PeekoRequest, res) => {
+        // destructure
+        const userId = req.currentUser!._id;
+        const videoDocument = req.resource! as VideoType;
 
-    try {
-        // remove userId from video likes array field in db
-        const preUpdatedDocument = await Video.findOneAndUpdate(
-            { videoKey },
-            { $pull: { likes: userId } },
-            { new: false }
-        );
+        try {
+            // remove userId from video likes array field in db
+            const preUpdatedDocument = await Video.findOneAndUpdate(
+                { videoKey: videoDocument.videoKey },
+                { $pull: { likes: userId } },
+                { new: false }
+            );
 
-        // if video not found
-        if (!preUpdatedDocument) {
-            return res.status(400).json({
+            // if video not found
+            if (!preUpdatedDocument) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Video not found",
+                });
+            }
+
+            // if userId was not in likes array
+            if (!preUpdatedDocument.likes.includes(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    newLikesCount: preUpdatedDocument.likes.length,
+                    error: "Failed to unlike already unliked video",
+                });
+            }
+
+            // return response
+            res.status(200).json({
+                success: true,
+                newLikesCount: preUpdatedDocument.likes.length - 1,
+                operation: "UNLIKE",
+            });
+        } catch (err: any) {
+            console.error(err);
+            res.status(400).json({
                 success: false,
-                error: "Video not found",
+                error: err.message,
             });
         }
-
-        // if userId was not in likes array
-        if (!preUpdatedDocument.likes.includes(userId)) {
-            return res.status(400).json({
-                success: false,
-                likesCount: preUpdatedDocument.likes.length,
-                error: "Invalid Feedback Operation Error: failed to unlike video post. reason: video post was not liked",
-            });
-        }
-
-        // return response
-        res.status(200).json({
-            success: true,
-            likesCount: preUpdatedDocument.likes.length - 1,
-            operation: "UNLIKE",
-        });
-    } catch (err: any) {
-        console.error(err);
-        res.status(400).json({
-            success: false,
-            error: err.message,
-        });
     }
-});
+);
 
 // export router
 export default router;
