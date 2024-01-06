@@ -302,7 +302,7 @@ router.delete(
             let deletedVideoDocument: VideoType | null =
                 await Video.findOneAndDelete({
                     videoKey,
-                });
+                }).populate("uploader", { username: 1 });
 
             if (!deletedVideoDocument) {
                 return res.status(400).json({
@@ -310,13 +310,6 @@ router.delete(
                     error: "Video not found",
                 });
             }
-
-            deletedVideoDocument = await deletedVideoDocument.populate(
-                "uploader",
-                {
-                    username: 1,
-                }
-            );
 
             // delete video file & thumbnail from s3
             await s3_delete([videoKey, videoKey + thumbnailSuffix]);

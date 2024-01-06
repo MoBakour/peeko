@@ -137,15 +137,7 @@ router.delete(
             // delete comment from db
             let deletedCommentDocument = await Comment.findByIdAndDelete(
                 commentId
-            );
-            if (deletedCommentDocument) {
-                deletedCommentDocument = await deletedCommentDocument.populate(
-                    "commentor",
-                    {
-                        username: 1,
-                    }
-                );
-            }
+            ).populate("commentor", { username: 1 });
 
             // decrement the number of comments on a video
             const updatedVideo = await Video.findOneAndUpdate(
