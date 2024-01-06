@@ -106,7 +106,18 @@ Upon successful registration, the user will receive the activation code via his 
 
 More about the activation process found in /user/activation description
 
--   Request body
+##### About the devActivation Option
+
+In the registration request body, an optional field is the `devActivation` field. This field can be used by the developer to speed up testing and development process
+
+To use this feature, a dev password is required in `devActivation.password`
+
+The `devActivation.autoActivate` option can be set to true or false
+
+-   If set to true, then the created account will be automatically activated without the need of a activation code, an activation email will not be sent to the user email address
+-   If set to false, then the response object will contain an extra `activationCode` field which will contain the activation code, but an email will still be sent to the user email address
+
+*   Request body
 
     ```ts
     {
@@ -121,7 +132,7 @@ More about the activation process found in /user/activation description
     }
     ```
 
--   Response body
+*   Response body
 
     -   Success <code: 200>
 
