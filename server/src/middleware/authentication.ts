@@ -35,41 +35,29 @@ export const authenticateUser = async (
     next: NextFunction
 ) => {
     try {
-        let token: string | undefined = undefined;
-
-        /**
-         * if token in cookies, take it
-         * otherwise if token in headers, take it
-         */
-        if (req.cookies && req.cookies.token) {
-            token = req.cookies.token;
-        } else {
-            const authHeader = req.headers["authorization"];
-            if (authHeader) {
-                const [bearer, headerToken] = authHeader.split(" ");
-                if (bearer.toLowerCase() === "bearer" && headerToken) {
-                    token = headerToken;
-                }
-            }
+        // get authentication token
+        const authorizationHeader = req.headers["authorization"];
+        if (!authorizationHeader) {
+            return next();
         }
 
-        /**
-         * if token
-         *      verify token
-         *          if verified
-         *              find user document and attach it to the request object
-         */
-        if (token) {
-            jwt.verify(token, TOKEN_SECRET_KEY, async (err, decoded) => {
-                if (!err && decoded) {
-                    const userId = (decoded as JwtPayload).userId;
-                    const user = await User.findById(userId);
+        // destructure and validate auth token
+        const [bearer, token] = authorizationHeader.split(" ");
+        if (!bearer || !token || bearer !== "Bearer") {
+            return next();
+        }
 
-                    req.currentUser = user;
-                }
-                next();
-            });
-        } else next();
+        // verify auth token with jwt
+        jwt.verify(token, TOKEN_SECRET_KEY, async (err, decoded) => {
+            if (!err && decoded) {
+                const userId = (decoded as JwtPayload).userId;
+                const user = await User.findById(userId);
+
+                req.currentUser = user;
+            }
+
+            next();
+        });
     } catch (err: any) {
         console.error(err);
         res.status(400).json({

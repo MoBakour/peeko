@@ -291,6 +291,7 @@ All changes applied on this project code base will be documented in this file.
 ### Changed
 
     - File naming convention
+    - Improved authentication function
 
 ## TODOS
 
