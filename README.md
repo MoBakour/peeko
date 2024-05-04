@@ -1,4 +1,4 @@
-# Peeko Backend
+# Peeko Social Media Application
 
-Peeko social media application backend codebase repository<br>
+Peeko is a short video reels social media application built with MERN stack (MongoDB, ExpressJS, ReactJS, NodeJS)<br>
 By [Swordax](https://linktr.ee/swordax)<br>

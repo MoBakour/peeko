@@ -1,0 +1,128 @@
+@import url("https://fonts.googleapis.com/css2?family=Catamaran:wght@700&family=Quicksand:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    font-family: "Quicksand";
+}
+
+/* scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-primary-1 rounded-xl;
+}
+
+.comments-top::-webkit-scrollbar {
+    height: 4px;
+}
+
+/* activation digits */
+.activation-digit {
+    @apply text-3xl bg-slate-200 caret-slate-200 w-11 h-14 sm:w-8 sm:h-10 sm:text-2xl font-bold rounded-lg border-2 border-transparent text-center outline-none;
+}
+
+.activation-digit-current {
+    @apply border-primary-1;
+}
+
+/* video seek bar */
+.seek-bar {
+    @apply absolute bottom-0 left-1/2 -translate-x-1/2 w-full h-2;
+
+    -webkit-appearance: none;
+    background-color: #ddd;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: opacity 0.2s;
+    transition: opacity 0.2s;
+}
+
+.seek-bar::-webkit-slider-thumb {
+    @apply bg-transparent w-2 h-2;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.seek-bar::-moz-range-thumb {
+    @apply bg-transparent w-2 h-2;
+    appearance: none;
+}
+
+.seek-bar::-webkit-slider-runnable-track {
+    @apply w-10/12 h-2;
+
+    -webkit-appearance: none;
+    background-color: #ddd;
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: opacity 0.2s;
+    transition: opacity 0.2s;
+
+    background: linear-gradient(
+        to right,
+        theme("colors.primary.1") 0%,
+        theme("colors.primary.2") calc(var(--progress) * 1%),
+        #ddd calc(var(--progress) * 1%),
+        #ddd 100%
+    );
+}
+
+.seek-bar::-moz-range-track {
+    @apply w-10/12 h-2;
+
+    appearance: none;
+    background-color: #ddd;
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: opacity 0.2s;
+    transition: opacity 0.2s;
+
+    background: linear-gradient(
+        to right,
+        theme("colors.primary.1") 0%,
+        theme("colors.primary.2") calc(var(--progress) * 1%),
+        #ddd calc(var(--progress) * 1%),
+        #ddd 100%
+    );
+}
+
+/* loading bounce effect */
+@keyframes bounce {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(0.5);
+    }
+}
+
+.loading-logo {
+    animation: bounce 0.5s;
+    animation-direction: alternate;
+    animation-timing-function: cubic-bezier(0.5, 0.05, 1, 0.5);
+    animation-iteration-count: infinite;
+}
+
+/* dropdown triangle */
+.user-dropdown::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(
+        to bottom left,
+        transparent 0%,
+        transparent 50%,
+        theme("colors.primary.1") 50%,
+        theme("colors.primary.1") 100%
+    );
+}
