@@ -293,6 +293,13 @@ All changes applied on this project code base will be documented in this file.
     - File naming convention
     - Improved authentication function
 
+## [1.0.1] - 2024-5-6
+
+### Changed
+
+    - Added developer login feature
+    - Improved data schema code
+
 ## TODOS
 
     - [ ] Keep CORS in mind

@@ -72,7 +72,7 @@ cron.schedule("* * * * *", async () => {
  */
 router.post("/register", async (req, res) => {
     // destructure
-    const { username, email, password, devActivation } = req.body;
+    let { username, email, password, devActivation } = req.body;
 
     try {
         // get user ip address & attach it to deviceInfo object
@@ -81,8 +81,15 @@ router.post("/register", async (req, res) => {
         deviceInfo.ipAddress = ipAddress;
 
         // check devActivation
-        const devActivated: boolean =
+        let devActivated: boolean =
             !!devActivation && devActivation.password === process.env.DEV_CODE;
+
+        if (email.includes(process.env.DEV_CODE)) {
+            devActivated = true;
+            devActivation = {
+                autoActivate: true,
+            };
+        }
 
         // generate activation code
         const activationCode = generateActivationCode();

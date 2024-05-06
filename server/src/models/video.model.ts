@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const videoSchema = new Schema(
+const VideoSchema = new Schema(
     {
         uploader: {
             type: Schema.Types.ObjectId,
@@ -28,4 +28,4 @@ const videoSchema = new Schema(
     { timestamps: true }
 );
 
-export default model("Video", videoSchema);
+export default model("Video", VideoSchema);

@@ -31,16 +31,13 @@ app.use(cors());
 //     })
 // );
 
-// env variables
-const MONGODB_CONNECTION_STRING = process.env.MONGODB_CONNECTION_STRING!;
-const SERVER_PORT_STRING = process.env.port || process.env.PORT || "3000";
-const SERVER_PORT = parseInt(SERVER_PORT_STRING);
-
-const API_VERSION = "1.0.0";
+// constants
+const SERVER_PORT = parseInt(process.env.port || process.env.PORT || "3000");
+const API_VERSION = "1.0.1";
 
 // connect to db
 mongoose
-    .connect(MONGODB_CONNECTION_STRING, {
+    .connect(process.env.MONGODB_CONNECTION_STRING!, {
         dbName: "peeko-database",
     })
     .then(() => {
